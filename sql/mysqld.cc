@@ -3793,7 +3793,11 @@ static int temp_file_size_cb_func(struct tmp_file_tracking *track,
       set_if_bigger(global_status_var.max_tmp_space_used, cached_space);
     }
     thd->status_var.tmp_space_used+= size_change;
+    /* Max value for the connection */
     set_if_bigger(thd->status_var.max_tmp_space_used,
+                  thd->status_var.tmp_space_used);
+    /* Max value for the query */
+    set_if_bigger(thd->max_tmp_space_used,
                   thd->status_var.tmp_space_used);
     DBUG_ASSERT((longlong) global_tmp_space_used >= 0);
     DBUG_ASSERT((longlong) thd->status_var.tmp_space_used >= 0);
