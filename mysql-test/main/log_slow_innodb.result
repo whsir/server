@@ -89,6 +89,7 @@ LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV	2
 [log_slow_stop.inc] log_slow_innodb-verbosity_4
 [log_grep.inc] file: log_slow_innodb-verbosity_4 pattern: ^# Max_tmp_disk_space_used.* expected_matches: 1
 [log_grep.inc] found expected match count: 1
+drop table t1;
 #
 # Cleanup
 #

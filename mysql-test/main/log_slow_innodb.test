@@ -98,6 +98,8 @@ SELECT c, count(*) from t1 group by c order by 2 limit 700,10;
 --let log_expected_matches= 1
 --source include/log_grep.inc
 
+drop table t1;
+
 --echo #
 --echo # Cleanup
 --echo #
