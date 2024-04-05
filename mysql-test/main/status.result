@@ -466,3 +466,21 @@ expect_1
 disconnect con4;
 disconnect con3;
 disconnect con1;
+connection default;
+# Test Uptime_since_flush_status
+# All results below should be 1
+flush global status;
+flush session status;
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+#
+# end of 11.5 tests
+#

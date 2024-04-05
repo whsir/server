@@ -472,4 +472,42 @@ eval SELECT '$time_1' < '$time_3' as expect_1;
 disconnect con4;
 disconnect con3;
 disconnect con1;
+connection default;
 
+--echo # Test Uptime_since_flush_status
+--echo # All results below should be 1
+
+flush global status;
+flush session status;
+
+--sleep 1
+
+let $global_flush_status= `SELECT VARIABLE_VALUE FROM INFORMATION_SCHEMA.GLOBAL_STATUS WHERE VARIABLE_NAME LIKE 'Uptime_since_flush_status'`;
+let $local_flush_status= `SELECT VARIABLE_VALUE FROM INFORMATION_SCHEMA.SESSION_STATUS WHERE VARIABLE_NAME LIKE 'Uptime_since_flush_status'`;
+
+--sleep 2
+
+--disable_query_log
+--eval select $global_flush_status >= $local_flush_status as "1"
+flush session status;
+
+let $new_global_flush_status= `SELECT VARIABLE_VALUE FROM INFORMATION_SCHEMA.GLOBAL_STATUS WHERE VARIABLE_NAME LIKE 'Uptime_since_flush_status'`;
+let $new_local_flush_status= `SELECT VARIABLE_VALUE FROM INFORMATION_SCHEMA.SESSION_STATUS WHERE VARIABLE_NAME LIKE 'Uptime_since_flush_status'`;
+
+--eval select $new_global_flush_status >= $global_flush_status as "1"
+--eval select $new_local_flush_status < $global_flush_status as "1"
+
+--sleep 2
+flush global status;
+
+let $local_flush_status=$new_local_flush_status;
+let $new_global_flush_status= `SELECT VARIABLE_VALUE FROM INFORMATION_SCHEMA.GLOBAL_STATUS WHERE VARIABLE_NAME LIKE 'Uptime_since_flush_status'`;
+let $new_local_flush_status= `SELECT VARIABLE_VALUE FROM INFORMATION_SCHEMA.SESSION_STATUS WHERE VARIABLE_NAME LIKE 'Uptime_since_flush_status'`;
+
+--eval select $new_local_flush_status  >= $local_flush_status as "1"
+--eval select $new_global_flush_status < $new_local_flush_status as "1"
+
+--enable_query_log
+--echo #
+--echo # end of 11.5 tests
+--echo #
