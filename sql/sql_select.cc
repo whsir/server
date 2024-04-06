@@ -22322,7 +22322,7 @@ bool open_tmp_table(TABLE *table)
 
    RETURN
      FALSE - OK
-     TRUE  - Error
+     TRUE  - Error.  my_error() have been called
 */
 
 
@@ -22538,7 +22538,7 @@ bool create_internal_tmp_table(TABLE *table, KEY *org_keyinfo,
 
    RETURN
      FALSE - OK
-     TRUE  - Error
+     TRUE  - Error ; my_error() has been called.
 */
 
 /* Create internal MyISAM temporary table */
@@ -22678,6 +22678,8 @@ bool create_internal_tmp_table(TABLE *table, KEY *org_keyinfo,
 /*
   If a HEAP table gets full, create a internal table in MyISAM or Maria
   and copy all rows to this
+
+  In case of error, my_error() or handler::print_error() will be called.
 */
 
 
