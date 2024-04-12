@@ -779,6 +779,12 @@ char *opt_logname, *opt_slow_logname, *opt_bin_logname;
 char *opt_binlog_index_name=0;
 my_bool opt_binlog_legacy_event_pos= FALSE;
 
+/*
+  Flag if the METADATA_LOCK_INFO is used. In this case we store the time
+  when we take a MDL lock.
+*/
+bool metadata_lock_info_plugin_loaded= 0;
+
 /* Static variables */
 
 my_bool opt_stack_trace;
