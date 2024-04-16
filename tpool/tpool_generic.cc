@@ -628,7 +628,7 @@ void thread_pool_generic::check_idle(std::chrono::system_clock::time_point now, 
   }
 
   /* Switch timer off after 1 minute of idle time */
-  if (now - idle_since > max_idle_time)
+  if (now - idle_since > max_idle_time && m_active_threads.empty())
   {
     idle_since= invalid_timestamp;
     switch_timer(timer_state_t::OFF,lk);
@@ -722,6 +722,16 @@ static int  throttling_interval_ms(size_t n_threads,size_t concurrency)
 /* Create a new worker.*/
 bool thread_pool_generic::add_thread(std::unique_lock<std::mutex> &lk)
 {
+  /*
+    This function is called when there is not enough standby/free threads,
+    i.e at least theoretical danger of deadlock exists. So switch on maintenance
+    timer,if not already on, to periodically checks the pool health and create
+    more threads if required.
+    Fixed size pools do not need this.
+  */
+  if (m_min_threads != m_max_threads)
+    switch_timer(timer_state_t::ON, lk);
+
   if (m_thread_creation_pending.test_and_set())
     return false;
 
@@ -729,7 +739,7 @@ bool thread_pool_generic::add_thread(std::unique_lock<std::mutex> &lk)
 
   if (n_threads >= m_max_threads)
     return false;
-  if (n_threads >= m_min_threads && m_min_threads != m_max_threads)
+  if (n_threads >= m_min_threads)
   {
     auto now = std::chrono::system_clock::now();
     if (now - m_last_thread_creation <
@@ -739,8 +749,6 @@ bool thread_pool_generic::add_thread(std::unique_lock<std::mutex> &lk)
         Throttle thread creation and wakeup deadlock detection timer,
         if is it off.
       */
-      switch_timer(timer_state_t::ON, lk);
-
       return false;
     }
   }
