@@ -1487,9 +1487,10 @@ bool wsrep_check_mode_after_open_table (THD *thd,
              db_type != DB_TYPE_PERFORMANCE_SCHEMA)
   {
     bool is_system_db= (tbl &&
-                        tbl->s->table_category ==
-                        TABLE_CATEGORY_INFORMATION &&
-                        !strcmp(tbl->s->db.str, "information_schema"));
+                        (!strcmp(tbl->s->db.str, "mysql") ||
+                         (tbl->s->table_category ==
+                          TABLE_CATEGORY_INFORMATION &&
+                          !strcmp(tbl->s->db.str, "information_schema"))));
 
     if (!is_system_db &&
 	!is_temporary_table(tables))
