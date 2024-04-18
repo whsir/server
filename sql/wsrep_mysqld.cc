@@ -1456,6 +1456,7 @@ bool wsrep_check_mode_after_open_table (THD *thd,
                    (db_type == DB_TYPE_ARIA && wsrep_check_mode(WSREP_MODE_REPLICATE_ARIA)));
   TABLE *tbl= tables->table;
 
+  DBUG_ASSERT(tbl);
   if (replicate)
   {
     /*
