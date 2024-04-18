@@ -264,3 +264,26 @@ drop table t1;
 #
 # End of 10.2 tests
 #
+#
+# MDEV-33901 INDEX_STATISTICS.QUERIES is incremented additionally for
+# subqueries
+#
+SET @save_userstat= @@userstat;
+set global userstat= 1;
+create or replace table t1 (a int, key(a)) engine=MyISAM;
+insert into t1 values (1),(2),(3),(4);
+flush index_statistics;
+select a from t1 where a in ( select a from t1 );
+a
+1
+2
+3
+4
+show index_statistics;
+Table_schema	Table_name	Index_name	Rows_read	Queries
+test	t1	a	8	1
+drop table t1;
+set global userstat=@save_userstat;
+#
+# End of 11.5 tests
+#
