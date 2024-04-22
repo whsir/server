@@ -75,6 +75,7 @@ GRANT USAGE ON *.* TO mysqltest@localhost;
 
 connect(con1, localhost, mysqltest);
 FLUSH STATUS;
+FLUSH SESSION STATUS;
 --error ER_SPECIFIC_ACCESS_DENIED_ERROR
 FLUSH GLOBAL STATUS;
 disconnect con1;
