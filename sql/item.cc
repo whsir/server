@@ -2176,6 +2176,25 @@ Item::Type Item_name_const::type() const
 
 bool Item_name_const::fix_fields(THD *thd, Item **ref)
 {
+  /*
+    If we have either of the following:
+      SELECT ... WHERE foo=NAME_CONST(...)
+      SELECT ... JOIN ... ON foo=NAME_CONST(...)
+    then we have an opportunity to unwrap the NAME_CONST and
+    use the enclosed value directly, replacing NAME_CONST in
+    the parse tree with the value it encloses, but only if
+    we're within a SELECT.
+   */
+  if (thd->last_sql_command == SQLCOM_SELECT &&
+      (thd->where == THD_WHERE::WHERE_CLAUSE ||
+       thd->where == THD_WHERE::ON_CLAUSE) &&
+    !value_item->fix_fields_if_needed(thd, &value_item))
+  {
+    thd->change_item_tree(ref, value_item);
+    return FALSE;
+  }
+  // else, could not unwrap, fall back to default handling below.
+
   if (value_item->fix_fields_if_needed(thd, &value_item) ||
       name_item->fix_fields_if_needed(thd, &name_item) ||
       !value_item->const_item() ||
@@ -5528,7 +5547,7 @@ static Item** find_field_in_group_list(Item *find_item, ORDER *group_list)
         is ambiguous.
       */
       my_error(ER_NON_UNIQ_ERROR, MYF(0),
-               find_item->full_name(), current_thd->where);
+               find_item->full_name(), thd_where(current_thd));
       return NULL;
     }
   }
@@ -5613,7 +5632,7 @@ resolve_ref_in_select_and_group(THD *thd, Item_ident *ref, SELECT_LEX *select)
       push_warning_printf(thd, Sql_condition::WARN_LEVEL_WARN,
                           ER_NON_UNIQ_ERROR,
                           ER_THD(thd,ER_NON_UNIQ_ERROR), ref->full_name(),
-                          thd->where);
+                          thd_where(thd));
 
     }
   }
@@ -5947,7 +5966,7 @@ Item_field::fix_outer_field(THD *thd, Field **from_field, Item **reference)
     if (upward_lookup)
     {
       // We can't say exactly what absent table or field
-      my_error(ER_BAD_FIELD_ERROR, MYF(0), full_name(), thd->where);
+      my_error(ER_BAD_FIELD_ERROR, MYF(0), full_name(), thd_where(thd));
     }
     else
     {
@@ -6174,7 +6193,7 @@ bool Item_field::fix_fields(THD *thd, Item **reference)
             {
               /* The column to which we link isn't valid. */
               my_error(ER_BAD_FIELD_ERROR, MYF(0), (*res)->name.str,
-                       thd->where);
+                       thd_where(thd));
               return(1);
             }
 
@@ -6219,7 +6238,7 @@ bool Item_field::fix_fields(THD *thd, Item **reference)
 
       if (unlikely(!select))
       {
-        my_error(ER_BAD_FIELD_ERROR, MYF(0), full_name(), thd->where);
+        my_error(ER_BAD_FIELD_ERROR, MYF(0), full_name(), thd_where(thd));
         goto error;
       }
       if ((ret= fix_outer_field(thd, &from_field, reference)) < 0)
@@ -8163,7 +8182,7 @@ bool Item_ref::fix_fields(THD *thd, Item **reference)
       if (unlikely(!outer_context))
       {
         /* The current reference cannot be resolved in this query. */
-        my_error(ER_BAD_FIELD_ERROR,MYF(0), full_name(), thd->where);
+        my_error(ER_BAD_FIELD_ERROR,MYF(0), full_name(), thd_where(thd));
         goto error;
       }
 
@@ -8314,7 +8333,7 @@ bool Item_ref::fix_fields(THD *thd, Item **reference)
       {
         /* The item was not a table field and not a reference */
         my_error(ER_BAD_FIELD_ERROR, MYF(0),
-                 this->full_name(), thd->where);
+                 this->full_name(), thd_where(thd));
         goto error;
       }
       /* Should be checked in resolve_ref_in_select_and_group(). */
