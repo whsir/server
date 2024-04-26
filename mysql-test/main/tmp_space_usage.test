@@ -22,16 +22,16 @@ show global status like  "max_tmp_space_used";
 # Print variables that can affect the test result
 show session status like "tmp_space_used";
 show global status like "tmp_space_used";
-select @@global.max_tmp_space_usage, @@global.max_total_tmp_space_usage;
+select @@global.max_tmp_session_space_usage, @@global.max_tmp_total_space_usage;
 select @@binlog_stmt_cache_size,@@binlog_format;
 
 create table t1 (a int primary key, v varchar(256), c int default(0)) engine=innodb;
 --error 41
 insert into t1 (a,v) select seq, repeat(char(64+mod(seq,32)),mod(seq,254)+1) from seq_1_to_65536;
-set @@max_tmp_space_usage=1024*1024*1024;
+set @@max_tmp_session_space_usage=1024*1024*1024;
 --error 42
 insert into t1 (a,v) select seq, repeat(char(64+mod(seq,32)),mod(seq,254)+1) from seq_1_to_65536;
-set @@max_tmp_space_usage=default;
+set @@max_tmp_session_space_usage=default;
 
 set @@binlog_format="statement";
 insert into t1 (a,v) select seq, repeat(char(64+mod(seq,32)),mod(seq,254)+1) from seq_1_to_65536;
@@ -53,17 +53,17 @@ select v,count(*) from t1 group by v limit 2;
 update t1 set v=right(v,2);
 
 set @@binlog_format="statement";
-set @@max_tmp_space_usage=65536;
+set @@max_tmp_session_space_usage=65536;
 set @@tmp_memory_table_size=0;
 --error 200
 update t1,t2 set t1.c=t2.a, t2.b=1 where t1.a=t2.a;
 set @@binlog_format="row";
-set @@max_tmp_space_usage=default;
+set @@max_tmp_session_space_usage=default;
 
 drop table t1,t2;
 
 --echo #
---echo # Check max_total_tmp_space_usage & processlist
+--echo # Check max_tmp_total_space_usage & processlist
 --echo #
 
 # We have to set tmp_memory_table_size to ensure we do not use disk for
@@ -82,11 +82,11 @@ let $tmp_usage2=`select variable_value from information_schema.global_status whe
 --disable_query_log
 if ($tmp_usage1 == $tmp_usage2)
 {
---echo # session.max_tmp_space_usage == global.max_tmp_space_usage
+--echo # session.max_tmp_session_space_usage == global.max_tmp_session_space_usage
 }
 if ($tmp_usage1 != $tmp_usage2)
 {
---echo session.max_tmp_space_usage ($tmp_usage1) != global.max_tmp_space_usage ($tmp_usage2)
+--echo session.max_tmp_session_space_usage ($tmp_usage1) != global.max_tmp_session_space_usage ($tmp_usage2)
 }
 --enable_query_log
 
@@ -119,12 +119,12 @@ if ($tmp_usage1 != $tmp_usage2)
 --error 42
 insert into t2 (a,v) select seq, repeat(char(64+mod(seq,32)),mod(seq,254)+1) from seq_1_to_3000;
 --echo # Test setting tmp_space_usage to 0 to disable quotas
-set @save_max_total_tmp_space_usage=@@global.max_total_tmp_space_usage;
-set @@global.max_total_tmp_space_usage=0;
-set @@max_tmp_space_usage=0;
+set @save_max_tmp_total_space_usage=@@global.max_tmp_total_space_usage;
+set @@global.max_tmp_total_space_usage=0;
+set @@max_tmp_session_space_usage=0;
 insert into t2 (a,v) select seq, repeat(char(64+mod(seq,32)),mod(seq,254)+1) from seq_1_to_3000;
-set @@global.max_total_tmp_space_usage=@save_max_total_tmp_space_usage;
-set @@max_tmp_space_usage=0;
+set @@global.max_tmp_total_space_usage=@save_max_tmp_total_space_usage;
+set @@max_tmp_session_space_usage=0;
 connection default;
 insert into t1 (a,v) values(9999990,0);
 commit;
@@ -137,7 +137,7 @@ drop table t1,t2;
 --echo # Test case from Elena
 --echo #
 
-SET @@max_tmp_space_usage= 64*1024;
+SET @@max_tmp_session_space_usage= 64*1024;
 set @@binlog_format="statement";
 
 CREATE OR REPLACE TABLE t1 (a INT, b INT);
@@ -154,8 +154,8 @@ DROP TABLE t1;
 --echo # if non transactional tables are used.
 --echo #
 
-set @save_max_total_tmp_space_usage=@@global.max_total_tmp_space_usage;
-SET @@global.max_total_tmp_space_usage=64*1024;
+set @save_max_tmp_total_space_usage=@@global.max_tmp_total_space_usage;
+SET @@global.max_tmp_total_space_usage=64*1024;
 set @@binlog_format="row";
 
 create table t1 (a int primary key, v varchar(256)) engine=myisam;
@@ -173,13 +173,13 @@ show warnings;
 select count(*) <> 0 from t1;
 drop table t1;
 
-set @@global.max_total_tmp_space_usage=@save_max_total_tmp_space_usage;
+set @@global.max_tmp_total_space_usage=@save_max_tmp_total_space_usage;
 
 --echo #
 --echo # Check updating non transactional table
 --echo #
 
-SET max_tmp_space_usage= 64*1024;
+SET max_tmp_session_space_usage= 64*1024;
  
 CREATE TABLE t1 (
   a varchar(1024), b varchar(1024), c varchar(1024), d varchar(1024), e varchar(1024), f varchar(1024), g varchar(1024)
@@ -201,10 +201,10 @@ DROP TABLE t1;
 
 --echo #
 --echo # MDEV-33680 Server hangs or assertion fails upon SELECT with limited
---echo # max_tmp_space_usage
+--echo # max_tmp_session_space_usage
 --echo #
 
-set max_tmp_space_usage= 1024*1024;
+set max_tmp_session_space_usage= 1024*1024;
 --error 201
 select count(distinct concat(seq,repeat('x',1000))) from seq_1_to_1000;
 
@@ -213,9 +213,9 @@ select count(distinct concat(seq,repeat('x',1000))) from seq_1_to_1000;
 --echo # temp_file_size_cb_func(tmp_file_tracking*, int)
 --echo #
 
-set @@global.max_total_tmp_space_usage=64*1024*1024;
-set @@max_tmp_space_usage=1179648;
-select @@max_tmp_space_usage;
+set @@global.max_tmp_total_space_usage=64*1024*1024;
+set @@max_tmp_session_space_usage=1179648;
+select @@max_tmp_session_space_usage;
 set @save_aria_repair_threads=@@aria_repair_threads;
 set @@aria_repair_threads=2;
 set @save_max_heap_table_size=@@max_heap_table_size;

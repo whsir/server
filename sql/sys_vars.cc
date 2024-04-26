@@ -7216,7 +7216,7 @@ static Sys_var_bit Sys_system_versioning_insert_history(
 
 /* Default limit 1T */
 static Sys_var_ulonglong Sys_max_tmp_space_usage(
-       "max_tmp_space_usage",
+       "max_tmp_session_space_usage",
        "The maximum total size of temporary file and temporary table usage. "
        "A value of 0 disables this feature.",
        SESSION_VAR(max_tmp_space_usage), CMD_LINE(REQUIRED_ARG),
@@ -7224,7 +7224,7 @@ static Sys_var_ulonglong Sys_max_tmp_space_usage(
        BLOCK_SIZE(65536));
 
 static Sys_var_ulonglong Sys_max_total_tmp_space_usage(
-       "max_total_tmp_space_usage",
+       "max_tmp_total_space_usage",
        "The maximum total size of all temporary file and temporary table "
        "usage over all connections. "
        "A value of 0 disables this feature.",
