@@ -8,7 +8,7 @@ call mtr.add_suppression("Writing one row to the row-based binary log failed.*")
 
 --connection slave
 STOP SLAVE;
-SET GLOBAL slave_parallel_threads=2, max_total_tmp_space_usage=64*1024;
+SET GLOBAL slave_parallel_threads=2, max_tmp_total_space_usage=64*1024;
 START SLAVE;
 
 --connection master
@@ -34,5 +34,5 @@ let $slave_skip_counter=2;
 # cleanup
 --connection slave
 STOP SLAVE;
-SET GLOBAL max_total_tmp_space_usage=default;
+SET GLOBAL max_tmp_total_space_usage=default;
 set GLOBAL slave_parallel_threads=default;
