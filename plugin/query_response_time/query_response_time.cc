@@ -155,14 +155,43 @@ class time_collector
   Atomic_counter<uint64_t> m_total[QUERY_TYPES][OVERALL_POWER_COUNT + 1];
 
 public:
-  time_collector(utility& u): m_utility(&u) { flush(); }
+  time_collector(utility& u): m_utility(&u) { flush_all(); }
   ~time_collector() = default;
   uint32_t count(QUERY_TYPE type, uint index) { return m_count[type][index]; }
   uint64_t total(QUERY_TYPE type, uint index) { return m_total[type][index]; }
-  void flush()
+  void flush(QUERY_TYPE type)
+  {
+    switch (type) {
+    case ANY: flush_all(); break;
+    case READ: flush_read(); break;
+    case WRITE: flush_write(); break;
+    }
+  }
+  void flush_all()
   {
     memset((void*)&m_count,0,sizeof(m_count));
     memset((void*)&m_total,0,sizeof(m_total));
+  }
+  void flush_read()
+  {
+    memset((void*)&m_count[READ],0,sizeof(m_count[READ]));
+    memset((void*)&m_total[READ],0,sizeof(m_total[READ]));
+    update_total();
+  }
+  void flush_write()
+  {
+    memset((void*)&m_count[WRITE],0,sizeof(m_count[WRITE]));
+    memset((void*)&m_total[WRITE],0,sizeof(m_total[WRITE]));
+    update_total();
+  }
+  void update_total()
+  {
+    int count, i;
+    for (i=0, count= m_utility->bound_count(); i < count; ++i)
+    {
+      m_count[0][i]= m_count[1][i]+m_count[2][i];
+      m_total[0][i]= m_total[1][i]+m_total[2][i];
+    }
   }
   void collect(QUERY_TYPE type, uint64_t time)
   {
@@ -188,13 +217,18 @@ public:
   collector() : m_time(m_utility)
   {
     m_utility.setup(DEFAULT_BASE);
-    m_time.flush();
+    m_time.flush_all();
   }
 public:
-  void flush()
+  void flush(QUERY_TYPE type)
   {
-    m_utility.setup(opt_query_response_time_range_base);
-    m_time.flush();
+    if (opt_query_response_time_range_base != m_utility.base())
+    {
+      /* We have to flush everything if base changes */
+      type= ANY;
+      m_utility.setup(opt_query_response_time_range_base);
+    }
+    m_time.flush(type);
   }
   int fill(QUERY_TYPE type, THD* thd, TABLE_LIST *tables, COND *cond,
            bool extra_fields)
@@ -270,17 +304,29 @@ static collector g_collector;
 
 void query_response_time_init()
 {
-  query_response_time_flush();
+  query_response_time_flush_all();
 }
 
 void query_response_time_free()
 {
-  query_response_time::g_collector.flush();
+  query_response_time::g_collector.flush(ANY);
 }
 
-int query_response_time_flush()
+int query_response_time_flush_all()
 {
-  query_response_time::g_collector.flush();
+  query_response_time::g_collector.flush(ANY);
+  return 0;
+}
+
+int query_response_time_flush_read()
+{
+  query_response_time::g_collector.flush(READ);
+  return 0;
+}
+
+int query_response_time_flush_write()
+{
+  query_response_time::g_collector.flush(WRITE);
   return 0;
 }
 

@@ -2,8 +2,7 @@
 # Tests for query_response_time_session_stats variable
 #
 SET @saved_query_response_time_stats = @@GLOBAL.query_response_time_stats;
-SET @saved_query_response_time_flush = @@GLOBAL.query_response_time_flush;
-SET GLOBAL query_response_time_flush= 'ON';
+FLUSH query_response_time;
 SELECT SUM(COUNT),1 FROM INFORMATION_SCHEMA.QUERY_RESPONSE_TIME;
 SUM(COUNT)	1
 0	1
@@ -122,5 +121,4 @@ disconnect con2;
 disconnect con3;
 connection default;
 # Cleanup
-SET GLOBAL query_response_time_flush = @saved_query_response_time_flush;
 SET GLOBAL query_response_time_stats = @saved_query_response_time_stats;

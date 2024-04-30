@@ -705,3 +705,43 @@ SET SESSION query_response_time_exec_time_debug=default;
 SET GLOBAL QUERY_RESPONSE_TIME_RANGE_BASE=default;
 SET GLOBAL QUERY_RESPONSE_TIME_STATS=default;
 drop table t1;
+#
+# MDEV-34031 FLUSH QUERY_RESPONSE_TIME_WRITE also flushes READ, and
+# vice versa
+#
+flush query_response_time;
+set query_response_time_session_stats=on;
+create table t1 (a int);
+insert into t1 values (1);
+insert into t1 values (2);
+select * from t1;
+a
+1
+2
+select sum(count) from information_schema.query_response_time_read;
+sum(count)
+2
+select sum(count) from information_schema.query_response_time_write;
+sum(count)
+3
+flush query_response_time_write;
+select sum(count) from information_schema.query_response_time_read;
+sum(count)
+4
+select sum(count) from information_schema.query_response_time_write;
+sum(count)
+0
+set @save_query_response_time_range_base=@@global.query_response_time_range_base;
+select @@global.query_response_time_range_base;
+@@global.query_response_time_range_base
+10
+set @@global.query_response_time_range_base=2;
+flush query_response_time_write;
+select sum(count) from information_schema.query_response_time_read;
+sum(count)
+0
+select sum(count) from information_schema.query_response_time_write;
+sum(count)
+0
+set @@global.query_response_time_range_base=@save_query_response_time_range_base;
+drop table t1;

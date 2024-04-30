@@ -67,7 +67,9 @@ typedef class Item COND;
 #ifdef HAVE_RESPONSE_TIME_DISTRIBUTION
 extern void query_response_time_init();
 extern void query_response_time_free();
-extern int query_response_time_flush();
+extern int query_response_time_flush_all();
+extern int query_response_time_flush_read();
+extern int query_response_time_flush_write();
 extern void query_response_time_collect(QUERY_TYPE type, ulonglong query_time);
 extern int  query_response_time_fill(THD* thd, TABLE_LIST *tables,
                                      COND *cond);
