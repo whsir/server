@@ -25,7 +25,17 @@
 
 ulong opt_query_response_time_range_base= QRT_DEFAULT_BASE;
 my_bool opt_query_response_time_stats= 0;
+static my_bool opt_query_response_time_flush= 0;
 static my_bool inited= 0;
+
+static void query_response_time_flush_update(
+              MYSQL_THD thd __attribute__((unused)),
+              struct st_mysql_sys_var *var __attribute__((unused)),
+              void *tgt __attribute__((unused)),
+              const void *save __attribute__((unused)))
+{
+  query_response_time_flush_all();
+}
 
 enum session_stat
 {
@@ -43,13 +53,19 @@ static MYSQL_SYSVAR_ULONG(range_base, opt_query_response_time_range_base,
        PLUGIN_VAR_RQCMDARG,
        "Select base of log for query_response_time ranges. "
        "WARNING: change of this variable take effect only after next "
-       "FLUSH QUERY_RESPONSE_TIME execution. Changing the variable will "
-       "flush both read and writes on the next flush",
+       "FLUSH QUERY_RESPONSE_TIME execution.  Changing the variable will "
+       "flush both read and writes on the next FLUSH",
        NULL, NULL, QRT_DEFAULT_BASE, 2, QRT_MAXIMUM_BASE, 1);
 static MYSQL_SYSVAR_BOOL(stats, opt_query_response_time_stats,
        PLUGIN_VAR_OPCMDARG,
        "Enable or disable query response time statistics collecting",
        NULL, NULL, FALSE);
+static MYSQL_SYSVAR_BOOL(flush, opt_query_response_time_flush,
+       PLUGIN_VAR_NOCMDOPT,
+       "Update of this variable flushes statistics and re-reads "
+       "query_response_time_range_base. Deprecated. "
+       "Use \"FLUSH query_response_time\" instead",
+       NULL, query_response_time_flush_update, FALSE);
 #ifndef DBUG_OFF
 static MYSQL_THDVAR_ULONGLONG(exec_time_debug, PLUGIN_VAR_NOCMDOPT,
        "Pretend queries take this many microseconds. When 0 (the default) use "
@@ -66,6 +82,7 @@ static struct st_mysql_sys_var *query_response_time_info_vars[]=
 {
   MYSQL_SYSVAR(range_base),
   MYSQL_SYSVAR(stats),
+  MYSQL_SYSVAR(flush),
 #ifndef DBUG_OFF
   MYSQL_SYSVAR(exec_time_debug),
 #endif

@@ -6,7 +6,8 @@
 --echo #
 
 SET @saved_query_response_time_stats = @@GLOBAL.query_response_time_stats;
-FLUSH query_response_time;
+SET @saved_query_response_time_flush = @@GLOBAL.query_response_time_flush;
+SET GLOBAL query_response_time_flush= 'ON';
 
 SELECT SUM(COUNT),1 FROM INFORMATION_SCHEMA.QUERY_RESPONSE_TIME;
 
@@ -106,6 +107,7 @@ disconnect con3;
 connection default;
 
 --echo # Cleanup
+SET GLOBAL query_response_time_flush = @saved_query_response_time_flush;
 SET GLOBAL query_response_time_stats = @saved_query_response_time_stats;
 --enable_ps_protocol
 
