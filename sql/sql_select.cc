@@ -4950,7 +4950,10 @@ int JOIN::exec_inner()
 
   if ((this->select_lex->options & OPTION_SCHEMA_TABLE) &&
       get_schema_tables_result(this, PROCESSED_BY_JOIN_EXEC))
-    DBUG_RETURN(0);
+  {
+    error= thd->is_error();
+    DBUG_RETURN(error);
+  }
 
   if (select_options & SELECT_DESCRIBE)
   {
