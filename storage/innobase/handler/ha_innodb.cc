@@ -19239,8 +19239,7 @@ static my_bool innodb_prefix_index_cluster_optimization;
 static MYSQL_SYSVAR_BOOL(prefix_index_cluster_optimization,
   innodb_prefix_index_cluster_optimization,
   PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_DEPRECATED,
-  "Deprecated parameter with no effect",
-  nullptr, nullptr, TRUE);
+  "Unused", nullptr, nullptr, FALSE);
 
 static MYSQL_SYSVAR_STR(data_file_path, innobase_data_file_path,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
@@ -19277,7 +19276,7 @@ static ulong innodb_purge_rseg_truncate_frequency;
 static MYSQL_SYSVAR_ULONG(purge_rseg_truncate_frequency,
   innodb_purge_rseg_truncate_frequency,
   PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_DEPRECATED,
-  "Deprecated parameter with no effect",
+  "Unused",
   NULL, NULL, 128, 1, 128, 0);
 
 static void innodb_undo_log_truncate_update(THD *thd, struct st_mysql_sys_var*,

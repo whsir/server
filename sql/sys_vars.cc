@@ -1906,14 +1906,16 @@ static Sys_var_ulong Sys_metadata_locks_cache_size(
        "metadata_locks_cache_size", "Unused",
        READ_ONLY GLOBAL_VAR(mdl_locks_cache_size), CMD_LINE(REQUIRED_ARG),
        VALID_RANGE(1, 1024*1024), DEFAULT(1024),
-       BLOCK_SIZE(1));
+       BLOCK_SIZE(1), NO_MUTEX_GUARD, NOT_IN_BINLOG, ON_CHECK(0), ON_UPDATE(0),
+       DEPRECATED(1105, ""));
 
 static ulong mdl_locks_hash_partitions;
 static Sys_var_ulong Sys_metadata_locks_hash_instances(
        "metadata_locks_hash_instances", "Unused",
        READ_ONLY GLOBAL_VAR(mdl_locks_hash_partitions), CMD_LINE(REQUIRED_ARG),
        VALID_RANGE(1, 1024), DEFAULT(8),
-       BLOCK_SIZE(1));
+       BLOCK_SIZE(1), NO_MUTEX_GUARD, NOT_IN_BINLOG, ON_CHECK(0), ON_UPDATE(0),
+       DEPRECATED(1105, ""));
 
 static Sys_var_on_access_session<Sys_var_ulonglong,
                                  PRIV_SET_SYSTEM_SESSION_VAR_PSEUDO_THREAD_ID>
