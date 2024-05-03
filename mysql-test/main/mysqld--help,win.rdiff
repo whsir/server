@@ -23,7 +23,7 @@
 + --slow-start-timeout=# 
 + Maximum number of milliseconds that the service control
 + manager should wait before trying to kill the windows
-+ service during startup(Default: 15000)
++ service during startup
   --socket=name       Socket file to use for connection
   --sort-buffer-size=# 
   Each thread that needs to do a sort allocates a buffer of
