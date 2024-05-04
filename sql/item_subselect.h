@@ -43,6 +43,7 @@ typedef class st_select_lex SELECT_LEX;
 */
 typedef Comp_creator* (*chooser_compare_func_creator)(bool invert);
 class Cached_item;
+class Explain_subq_materialization;
 
 /* base class for subselects */
 
@@ -591,6 +592,8 @@ public:
   
   List<Field_pair> corresponding_fields;
 
+  Explain_subq_materialization *materialization_tracker;
+
   /*
     Used to determine how this subselect item is represented in the item tree,
     in case there is a need to locate it there and replace with something else.
@@ -778,6 +781,7 @@ public:
   { return left_expr; }
   inline Item* left_exp_orig() const
   { return left_expr_orig; }
+  void init_subq_materialization_tracker(THD *thd);
 
   friend class Item_ref_null_helper;
   friend class Item_is_not_null_test;
@@ -1159,6 +1163,20 @@ public:
                      select_result_interceptor *result,
                      bool temp= FALSE) override;
   bool no_tables() const override;//=>base class
+  /* Possible execution strategies that can be used to compute hash semi-join.*/
+  enum exec_strategy {
+    UNDEFINED= 0,
+    COMPLETE_MATCH, /* Use regular index lookups. */
+    PARTIAL_MATCH,  /* Use some partial matching strategy. */
+    PARTIAL_MATCH_MERGE, /* Use partial matching through index merging. */
+    PARTIAL_MATCH_SCAN,  /* Use partial matching through table scan. */
+    IMPOSSIBLE,      /* Subquery materialization is not applicable. */
+    END_OF_EXEC_STRATEGIES /* End marker */
+  };
+  static_assert(END_OF_EXEC_STRATEGIES == 6,
+                "Modification of enum subselect_hash_sj_engine::exec_strategy "
+                "requires corresponding modification of "
+                "Explain_subq_materialization::exec_strategy_str[]");
 
 protected:
   /* The engine used to compute the IN predicate. */
@@ -1170,15 +1188,6 @@ protected:
   uint count_partial_match_columns;
   uint count_null_only_columns;
   uint count_columns_with_nulls;
-  /* Possible execution strategies that can be used to compute hash semi-join.*/
-  enum exec_strategy {
-    UNDEFINED,
-    COMPLETE_MATCH, /* Use regular index lookups. */
-    PARTIAL_MATCH,  /* Use some partial matching strategy. */
-    PARTIAL_MATCH_MERGE, /* Use partial matching through index merging. */
-    PARTIAL_MATCH_SCAN,  /* Use partial matching through table scan. */
-    IMPOSSIBLE      /* Subquery materialization is not applicable. */
-  };
   /* The chosen execution strategy. Computed after materialization. */
   exec_strategy strategy;
   exec_strategy get_strategy_using_schema();
@@ -1311,6 +1320,7 @@ public:
   rownum_t get_max_null_row() { return max_null_row; }
   MY_BITMAP * get_null_key() { return &null_key; }
   ha_rows get_null_count() { return null_count; }
+  ha_rows get_key_buff_elements() { return key_buff_elements; }
   /*
     Get the search key element that corresponds to the i-th key part of this
     index.
@@ -1548,4 +1558,35 @@ public:
   void cleanup();
   virtual enum_engine_type engine_type() { return TABLE_SCAN_ENGINE; }
 };
+
+/**
+  @brief Subquery materialization tracker
+
+  @details
+  Used to track various parameters of the materialized subquery execution,
+  such as the execution strategy, sizes of buffers employed, etc
+*/
+class Explain_subq_materialization : public Sql_alloc
+{
+public:
+  Explain_subq_materialization(MEM_ROOT *mem_root) :
+    partial_match_buffer_size(-1),
+    partial_match_merge_keys_counts(mem_root)
+  {}
+
+  void track_partial_merge_keys(Ordered_key **merge_keys,
+                                uint merge_keys_count);
+
+  void print_explain_json(Json_writer *writer, bool is_analyze);
+
+  subselect_hash_sj_engine::exec_strategy exec_strategy;
+
+  longlong partial_match_buffer_size;
+
+  Dynamic_array<ha_rows> partial_match_merge_keys_counts;
+
+  static const char* exec_strategy_str
+    [subselect_hash_sj_engine::exec_strategy::END_OF_EXEC_STRATEGIES + 1];
+};
+
 #endif /* ITEM_SUBSELECT_INCLUDED */

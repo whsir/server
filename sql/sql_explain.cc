@@ -782,6 +782,18 @@ bool Explain_node::print_explain_json_cache(Json_writer *writer,
 }
 
 
+bool Explain_node::print_explain_json_subq_materialization(Json_writer *writer,
+                                                           bool is_analyze)
+{
+  if (subq_materialization)
+  {
+    subq_materialization->print_explain_json(writer, is_analyze);
+    return true;
+  }
+  return false;
+}
+
+
 Explain_basic_join::~Explain_basic_join()
 {
   if (join_tabs)
@@ -929,6 +941,8 @@ void Explain_select::print_explain_json(Explain_query *query,
   Json_writer_nesting_guard guard(writer);
   
   bool started_cache= print_explain_json_cache(writer, is_analyze);
+  bool started_subq_mat= print_explain_json_subq_materialization(writer,
+                                                                 is_analyze);
 
   if (message ||
       select_type == pushed_derived_text ||
@@ -1032,6 +1046,8 @@ void Explain_select::print_explain_json(Explain_query *query,
     writer->end_object();
   }
 
+  if (started_subq_mat)
+    writer->end_object();
   if (started_cache)
     writer->end_object();
 }

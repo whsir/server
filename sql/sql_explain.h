@@ -86,6 +86,7 @@ class Explain_node : public Sql_alloc
 public:
   Explain_node(MEM_ROOT *root) :
     cache_tracker(NULL),
+    subq_materialization(NULL),
     connection_type(EXPLAIN_NODE_OTHER),
     children(root)
   {}
@@ -115,6 +116,12 @@ public:
   */
   Expression_cache_tracker* cache_tracker;
 
+  /**
+    This tracker is not NULL if the node explains a materialized subquery.
+    Otherwise it is NULL and not used
+  */
+  Explain_subq_materialization* subq_materialization;
+
   /*
     How this node is connected to its parent.
     (NOTE: EXPLAIN_NODE_NON_MERGED_SJ is set very late currently)
@@ -143,6 +150,8 @@ public:
   void print_explain_json_for_children(Explain_query *query,
                                        Json_writer *writer, bool is_analyze);
   bool print_explain_json_cache(Json_writer *writer, bool is_analyze);
+  bool print_explain_json_subq_materialization(Json_writer *writer,
+                                               bool is_analyze);
   virtual ~Explain_node() = default;
 };
 

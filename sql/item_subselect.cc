@@ -42,6 +42,7 @@
 #include "sql_parse.h"                          // check_stack_overrun
 #include "sql_cte.h"
 #include "sql_test.h"
+#include "my_json_writer.h"
 
 double get_post_group_estimate(JOIN* join, double join_op_rows);
 
@@ -3648,6 +3649,26 @@ bool Item_in_subselect::init_cond_guards()
   return FALSE;
 }
 
+/**
+  Initialize the tracker which will be used to provide information for
+  the output of EXPLAIN and ANALYZE
+*/
+void Item_in_subselect::init_subq_materialization_tracker(THD *thd)
+{
+  if (test_strategy(SUBS_MATERIALIZATION | SUBS_PARTIAL_MATCH_ROWID_MERGE |
+                    SUBS_PARTIAL_MATCH_TABLE_SCAN))
+  {
+    Explain_query *qw= thd->lex->explain;
+    DBUG_ASSERT(qw);
+    Explain_node *node= qw->get_node(unit->first_select()->select_number);
+    if (!node)
+      return;
+    node->subq_materialization= new(qw->mem_root)
+        Explain_subq_materialization(qw->mem_root);
+    materialization_tracker= node->subq_materialization;
+  }
+}
+
 
 bool
 Item_allany_subselect::select_transformer(JOIN *join)
@@ -5002,6 +5023,9 @@ subselect_hash_sj_engine::choose_partial_match_strategy(
                                         partial_match_key_parts_arg);
     if (pm_buff_size > thd->variables.rowid_merge_buff_size)
       strategy= PARTIAL_MATCH_SCAN;
+    else
+      item->get_IN_subquery()->materialization_tracker->
+          partial_match_buffer_size= pm_buff_size;
   }
 }
 
@@ -5776,7 +5800,7 @@ int subselect_hash_sj_engine::exec()
       }
     }
   }
-
+  item_in->materialization_tracker->exec_strategy= strategy;
   if (pm_engine)
     lookup_engine= pm_engine;
   item_in->change_engine(lookup_engine);
@@ -6510,6 +6534,8 @@ subselect_rowid_merge_engine::init(MY_BITMAP *non_null_key_parts,
                  0, 0))
     return TRUE;
 
+  item->get_IN_subquery()->materialization_tracker->
+      track_partial_merge_keys(merge_keys, merge_keys_count);
   return FALSE;
 }
 
@@ -6965,4 +6991,48 @@ void Item_subselect::init_expr_cache_tracker(THD *thd)
     return;
   DBUG_ASSERT(expr_cache->type() == Item::EXPR_CACHE_ITEM);
   node->cache_tracker= ((Item_cache_wrapper *)expr_cache)->init_tracker(qw->mem_root);
+}
+
+
+const char *Explain_subq_materialization::exec_strategy_str
+  [subselect_hash_sj_engine::exec_strategy::END_OF_EXEC_STRATEGIES + 1]=
+{
+  "undefined", "complete_match", "partial_match", "partial_match_merge",
+  "partial_match_scan", "impossible"
+};
+
+
+void Explain_subq_materialization::track_partial_merge_keys(
+    Ordered_key **merge_keys, uint merge_keys_count)
+{
+  partial_match_merge_keys_counts.resize(merge_keys_count, 0);
+  for (uint i= 0; i < merge_keys_count; i++)
+  {
+    partial_match_merge_keys_counts[i]=
+        merge_keys[i]->get_key_buff_elements();
+  }
+}
+
+
+void Explain_subq_materialization::print_explain_json(Json_writer *writer,
+                                                      bool is_analyze)
+{
+  writer->add_member("subquery_materialization").start_object();
+  if (is_analyze)
+  {
+    writer->add_member("r_exec_strategy").add_str(
+          exec_strategy_str[exec_strategy]);
+    if (partial_match_buffer_size != -1)
+    {
+      writer->add_member("r_partial_match_buffer_size").add_size(
+            partial_match_buffer_size);
+    }
+
+    for(uint i= 0; i < partial_match_merge_keys_counts.elements(); i++)
+    {
+      char name[50];
+      sprintf(name, "r_partial_merge_key_%u_size", i + 1);
+      writer->add_member(name).add_ull(partial_match_merge_keys_counts[i]);
+    }
+  }
 }
