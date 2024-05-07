@@ -103,6 +103,13 @@ my_bool io_cache_tmp_file_track(IO_CACHE *info, ulonglong file_size)
 }
 
 
+/**
+  End tmp space tracking for the data in the io cache
+
+  This is called when deleting or truncating the
+  cached file.
+*/
+
 void end_tracking_io_cache(IO_CACHE *info)
 {
   if ((info->myflags & (MY_TRACK | MY_TRACK_WITH_LIMIT)) &&
@@ -115,9 +122,10 @@ void end_tracking_io_cache(IO_CACHE *info)
 
 void truncate_io_cache(IO_CACHE *info)
 {
-  if (my_chsize(info->file, 0, 0, MYF(MY_WME)) <= 0)
+  if (my_chsize(info->file, 0, 0, MYF(MY_WME)) == 0)
     end_tracking_io_cache(info);
 }
+
 
 static void
 init_functions(IO_CACHE* info)
@@ -214,7 +222,7 @@ int init_io_cache_ext(IO_CACHE *info, File file, size_t cachesize,
   info->buffer=0;
   info->seek_not_done= 0;
   info->next_file_user= NULL;
-  info->tracking.last_position= 0;
+  info->tracking.previous_file_size= 0;
   info->tracking.file_size= 0;
 
   if (file >= 0)

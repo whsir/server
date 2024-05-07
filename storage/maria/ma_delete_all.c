@@ -131,9 +131,9 @@ int maria_delete_all_rows(MARIA_HA *info)
 
   if (_ma_flush_table_files(info, MARIA_FLUSH_DATA|MARIA_FLUSH_INDEX,
                             FLUSH_IGNORE_CHANGED, FLUSH_IGNORE_CHANGED) ||
-      mysql_file_chsize(info->dfile.file, 0, 0, MYF(MY_WME)) ||
+      mysql_file_chsize(info->dfile.file, 0, 0, MYF(MY_WME)) > 0 ||
       mysql_file_chsize(share->kfile.file, share->base.keystart, 0,
-                        MYF(MY_WME)))
+                        MYF(MY_WME)) > 0)
     goto err;
 
   if (info->s->tracked)

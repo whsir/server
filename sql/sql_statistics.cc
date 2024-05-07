@@ -1581,7 +1581,7 @@ public:
 
     if (open_cached_file(&io_cache, mysql_tmpdir, TEMP_PREFIX,
                          1024,
-                         MYF(MY_WME | MY_TRACK | MY_TRACK_WITH_LIMIT)))
+                         MYF(MY_WME | MY_TRACK_WITH_LIMIT)))
       return true;
 
     handler *h= owner->stat_file;

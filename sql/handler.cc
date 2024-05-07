@@ -441,7 +441,6 @@ int ha_init_errors(void)
 #define SETMSG(nr, msg) handler_errmsgs[(nr) - HA_ERR_FIRST]= (msg)
 
   /* Allocate a pointer array for the error message strings. */
-  /* Zerofill it to avoid uninitialized gaps. */
   if (! (handler_errmsgs= (const char**) my_malloc(key_memory_handler_errmsgs,
                                                    HA_ERR_ERRORS * sizeof(char*),
                                                    MYF(MY_WME))))
