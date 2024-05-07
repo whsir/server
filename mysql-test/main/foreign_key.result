@@ -456,13 +456,22 @@ drop tables t2, t1;
 # Check drop table
 create or replace table t1 (id int primary key);
 create or replace table ch1 (id int, foreign key (id) references t1 (id));
-select * from t1;
-id
-select * from ch1;
-id
 drop table t1;
 ERROR 23000: Cannot delete or update a parent row: a foreign key constraint fails (ch1_ibfk_1)
-drop tables ch1, t1;
+set foreign_key_checks= 0;
+drop table t1;
+set foreign_key_checks= 1;
+create or replace table t1 (id int primary key);
+drop table t1;
+create or replace table t1 (id int primary key);
+repair table ch1;
+Table	Op	Msg_type	Msg_text
+test.ch1	repair	Note	Found 1 foreign keys
+test.ch1	repair	Note	Updated 1 referenced shares
+test.ch1	repair	note	The storage engine for the table doesn't support repair
+drop table t1;
+ERROR 23000: Cannot delete or update a parent row: a foreign key constraint fails (ch1_ibfk_1)
+drop table ch1;
 # Check drop database
 create or replace table t1 (id int primary key);
 select * from t1;

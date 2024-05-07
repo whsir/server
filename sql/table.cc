@@ -10651,13 +10651,17 @@ KEY * FK_info::find_idx(KEY *key_info, uint keys, bool foreign_idx)
 }
 
 
-bool TABLE_SHARE::fk_check_consistency(THD *thd)
+bool TABLE_SHARE::fk_check_consistency(THD *thd, bool repair)
 {
   mbd::set<Table_name> warned;
   mbd::set<Table_name> warned_self;
   bool error= false;
   uint rk_self_refs= 0;
   uint fk_self_refs= 0;
+  mbd::set<FK_table_to_lock> fk_tables_to_lock;
+  MDL_request_list fk_mdl_reqs;
+  mbd::map<TABLE_SHARE *, FK_ref_backup> fk_ref_backup;
+
   for (FK_info &rk: referenced_keys)
   {
     if (rk.self_ref())
@@ -10673,6 +10677,7 @@ bool TABLE_SHARE::fk_check_consistency(THD *thd)
     {
       if (!ha_table_exists(thd, &rk.foreign_db, &rk.foreign_table))
       {
+        // FIXME: replace ER_UNKNOWN_ERROR with error codes here and below
         my_printf_error(ER_UNKNOWN_ERROR, "Foreign table %s.%s not exists",
                         MYF(0), rk.foreign_db.str, rk.foreign_table.str);
       }
@@ -10744,6 +10749,47 @@ bool TABLE_SHARE::fk_check_consistency(THD *thd)
       fk_self_refs++;
       continue;
     }
+    Table_name t(fk.ref_table(thd->mem_root));
+    if (!fk_tables_to_lock.insert(t))
+      return true;
+  }
+
+  if (!fk_tables_to_lock.empty())
+  {
+    for (const FK_table_to_lock &t: fk_tables_to_lock)
+    {
+      MDL_request *req= new (thd->mem_root) MDL_request;
+      if (!req)
+      {
+        my_error(ER_OUT_OF_RESOURCES, MYF(0));
+        return true;
+      }
+      MDL_REQUEST_INIT(req, MDL_key::TABLE, t.table.db.str, t.table.name.str,
+                       MDL_SHARED, MDL_STATEMENT);
+      fk_mdl_reqs.push_front(req);
+    }
+  }
+
+  if (thd->mdl_context.acquire_locks(&fk_mdl_reqs,
+                                     thd->variables.lock_wait_timeout))
+  {
+    // FIXME: error code
+    push_warning_printf(thd, Sql_condition::WARN_LEVEL_NOTE, ER_UNKNOWN_ERROR,
+                        "Could not metadata-lock referenced tables");
+    return true;
+  }
+
+  if (repair)
+  {
+    if (thd->mdl_context.upgrade_shared_locks(&fk_mdl_reqs, MDL_EXCLUSIVE,
+                                              thd->variables.lock_wait_timeout))
+      return true;
+  }
+
+  for (FK_info &fk: foreign_keys)
+  {
+    if (fk.self_ref())
+      continue;
     TABLE_LIST tl;
     tl.init_one_table(fk.ref_db_ptr(), &fk.referenced_table, NULL, TL_IGNORE);
     Share_acquire sa(thd, tl);
@@ -10774,19 +10820,50 @@ bool TABLE_SHARE::fk_check_consistency(THD *thd)
     }
     if (!rk)
     {
-      bool warn;
-      if (!warned.insert(Table_name(fk.foreign_db, fk.foreign_table), &warn))
-        return true;
-      if (warn)
+      if (repair)
       {
-        my_printf_error(ER_UNKNOWN_ERROR,
-                        found_table ?
-                          "Referenced table %s.%s does not match referenced keys with foreign keys" :
-                          "Referenced table %s.%s does not refer this table", MYF(0),
-                        sa.share->db.str, sa.share->table_name.str);
+        // Similar to fk_handle_alter()
+        TABLE_SHARE *ref_share= sa.share;
+        if (ref_share->partitioned())
+        {
+          my_error(ER_FEATURE_NOT_SUPPORTED_WITH_PARTITIONING, MYF(0), "FOREIGN KEY");
+          return true;
+        }
+        FK_ref_backup *ref_bak;
+        FK_ref_backup fk_bak;
+        if (fk_bak.init(ref_share))
+          return true;
+        auto found= fk_ref_backup.find(ref_share);
+        if (found != fk_ref_backup.end())
+          ref_bak= &found->second;
+        else
+          ref_bak= fk_ref_backup.insert(ref_share, fk_bak);
+        if (!ref_bak)
+          return true;
+        FK_info *dst= fk.clone(&ref_share->mem_root);
+        if (!dst ||
+            ref_share->referenced_keys.push_back(dst, &ref_share->mem_root))
+        {
+          my_error(ER_OUT_OF_RESOURCES, MYF(0));
+          return true;
+        }
       }
-      DBUG_ASSERT(warn || error);
-      error= true;
+      else
+      {
+        bool warn;
+        if (!warned.insert(Table_name(fk.foreign_db, fk.foreign_table), &warn))
+          return true;
+        if (warn)
+        {
+          my_printf_error(ER_UNKNOWN_ERROR,
+                          found_table ?
+                            "Referenced table %s.%s does not match referenced keys with foreign keys" :
+                            "Referenced table %s.%s does not refer this table", MYF(0),
+                          sa.share->db.str, sa.share->table_name.str);
+        }
+        DBUG_ASSERT(warn || error);
+        error= true;
+      }
     }
   }
 
@@ -10812,6 +10889,46 @@ bool TABLE_SHARE::fk_check_consistency(THD *thd)
                         ER_UNKNOWN_ERROR,
                         "Found %u self-references",
                         fk_self_refs);
+  }
+
+  /* Update EXTRA2_FOREIGN_KEY_INFO section in FRM files. */
+  if (repair)
+  {
+    const uint count= fk_ref_backup.size();
+    if (!error)
+    {
+      for (auto &key_val: fk_ref_backup)
+      {
+        FK_ref_backup *ref_bak= const_cast<FK_ref_backup *>(&key_val.second);
+        TABLE_SHARE *ref_share= ref_bak->share;
+        if (ref_share->fk_write_shadow_frm(thd))
+        {
+          error= true;
+          break;
+        }
+        ref_bak->install_shadow= true;
+      }
+    }
+    for (auto &key_val: fk_ref_backup)
+    {
+      FK_ref_backup *ref_bak= const_cast<FK_ref_backup *>(&key_val.second);
+      TABLE_SHARE *ref_share= ref_bak->share;
+      if (error)
+      {
+        if (ref_bak->install_shadow)
+          ref_share->fk_drop_shadow_frm();
+        ref_bak->rollback();
+      }
+      else
+      {
+        DBUG_ASSERT(ref_bak->install_shadow);
+        ref_share->fk_install_shadow_frm();
+      }
+    }
+    if (!error && count)
+      push_warning_printf(thd, Sql_condition::WARN_LEVEL_NOTE,
+                          ER_UNKNOWN_ERROR, "Updated %u referenced shares", count);
+
   }
 
   return error;
