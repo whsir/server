@@ -1363,6 +1363,7 @@ static int maria_chk(HA_CHECK *param, char *filename)
       DBUG_PRINT("info", ("Resetting crashed state"));
       share->state.changed&= ~(STATE_CHANGED | STATE_CRASHED_FLAGS |
                                STATE_IN_REPAIR);
+      share->crash_error= 0;
     }
     else
       maria_mark_crashed(info);
@@ -1427,6 +1428,7 @@ static int maria_chk(HA_CHECK *param, char *filename)
       DBUG_PRINT("info", ("Resetting crashed state"));
       share->state.changed&= ~(STATE_CHANGED | STATE_CRASHED_FLAGS |
                                STATE_IN_REPAIR);
+      share->crash_error= 0;
     }
     else if (!maria_is_crashed(info) &&
              (param->testflag & T_UPDATE_STATE))
