@@ -56,6 +56,9 @@ EOF
 --echo # MDEV-33992 mariadb-admin flush-status command should do
 --echo # FLUSH GLOBAL STATUS
 --echo #
+
+flush session status;
+flush global status;
 --connect (con1,localhost,root,)
 --connect (con2,localhost,root,)
 --connect (con3,localhost,root,)
