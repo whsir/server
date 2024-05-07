@@ -358,8 +358,6 @@ test.t2	check	status	OK
 test.t3	check	Note	Found 1 referenced keys
 test.t3	check	status	OK
 alter table yt4 rename to zt4, algorithm=copy;
-Warnings:
-Warning	1451	Cannot delete or update a parent row: a foreign key constraint fails
 select * from t1, t2, t3;
 id	id	id
 check tables t1, t2, t3;
