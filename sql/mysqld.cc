@@ -1951,8 +1951,9 @@ static void mysqld_exit(int exit_code)
       SAFEMALLOC_REPORT_MEMORY(0);
   }
   if (global_tmp_space_used)
-    fprintf(stderr, "Warning: tmp_space not freed: %llu\n",
-            (ulonglong) global_tmp_space_used);
+    fprintf(stderr, "Warning: Internal tmp_space accounting error of %lld "
+            "bytes\n",
+            (longlong) global_tmp_space_used);
 
   DBUG_LEAVE;
 #ifdef _WIN32
@@ -3751,21 +3752,23 @@ static int temp_file_size_cb_func(struct tmp_file_tracking *track,
 {
   THD *thd= current_thd;
   int error= 0;
-  longlong size_change= (longlong) (track->file_size - track->last_position);
+  longlong size_change= (longlong) (track->file_size -
+                                    track->previous_file_size);
   DBUG_ENTER("temp_file_size_cb_func");
   DBUG_PRINT("enter", ("last: %llu  current: %llu  diff: %lld",
-                       track->last_position,
+                       track->previous_file_size,
                        track->file_size,
-                       (longlong) (track->file_size - track->last_position)));
+                       (longlong) (track->file_size -
+                                   track->previous_file_size)));
   DBUG_ASSERT(thd);
   if (thd)
   {
     /*
       This has to be true as thd must contain all tmp space used and
       any thus must have been called before with an allocation of
-      track->last_position.
+      track->previous_file_size.
     */
-    DBUG_ASSERT(thd->status_var.tmp_space_used >= track->last_position);
+    DBUG_ASSERT(thd->status_var.tmp_space_used >= track->previous_file_size);
     if (unlikely(thd->shared_thd))
       mysql_mutex_lock(&thd->LOCK_thd_data);
 
@@ -3803,7 +3806,7 @@ static int temp_file_size_cb_func(struct tmp_file_tracking *track,
     DBUG_ASSERT((longlong) thd->status_var.tmp_space_used >= 0);
 
     /* Record that we have registered the change */
-    track->last_position= track->file_size;
+    track->previous_file_size= track->file_size;
 
 exit:
     if (unlikely(thd->shared_thd))
@@ -7649,7 +7652,7 @@ SHOW_VAR status_vars[]= {
   {"Tc_log_page_size",         (char*) &tc_log_page_size,       SHOW_LONG_NOFLUSH},
   {"Tc_log_page_waits",        (char*) &tc_log_page_waits,      SHOW_LONG},
 #endif
-  {"tmp_space_used",           (char*) offsetof(STATUS_VAR, tmp_space_used), SHOW_LONGLONG_STATUS},
+  {"Tmp_space_used",           (char*) offsetof(STATUS_VAR, tmp_space_used), SHOW_LONGLONG_STATUS},
 #ifdef HAVE_POOL_OF_THREADS
   {"Threadpool_idle_threads",  (char *) &show_threadpool_idle_threads, SHOW_SIMPLE_FUNC},
   {"Threadpool_threads",       (char *) &show_threadpool_threads, SHOW_SIMPLE_FUNC},
@@ -7872,7 +7875,7 @@ static int mysql_init_variables(void)
   prepared_stmt_count= 0;
   mysqld_unix_port= opt_mysql_tmpdir= my_bind_addr_str= NullS;
   bzero((uchar*) &mysql_tmpdir_list, sizeof(mysql_tmpdir_list));
-  bzero((char*) &global_status_var, clear_up_to_global_memory_used);
+  bzero((char*) &global_status_var, clear_for_server_start);
   opt_large_pages= 0;
   opt_super_large_pages= 0;
 #if defined(ENABLED_DEBUG_SYNC)
@@ -9196,13 +9199,12 @@ void refresh_status(THD *thd)
   add_to_status(&global_status_var, &thd->status_var);
 
   /* Reset thread's status variables */
-  thd->set_status_var_init(clear_up_to_tmp_space_used);
+  thd->set_status_var_init(clear_for_flush_status);
   thd->status_var.global_memory_used= 0;
   bzero((uchar*) &thd->org_status_var, sizeof(thd->org_status_var)); 
   thd->start_bytes_received= 0;
 
   /* Reset some global variables */
-  reset_status_vars();
 #ifdef WITH_WSREP
   if (WSREP_ON)
   {

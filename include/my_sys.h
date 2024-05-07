@@ -184,7 +184,7 @@ void my_large_page_truncate(size_t *size);
 
 struct tmp_file_tracking
 {
-  ulonglong last_position;
+  ulonglong previous_file_size;
   ulonglong file_size;
 };
 

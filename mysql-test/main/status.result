@@ -183,7 +183,7 @@ show status like 'hand%write%';
 Variable_name	Value
 Handler_tmp_write	0
 Handler_write	0
-show status like '%_tmp%';
+show status like '%\_tmp%';
 Variable_name	Value
 Created_tmp_disk_tables	0
 Created_tmp_files	0
@@ -197,7 +197,7 @@ show status like 'hand%write%';
 Variable_name	Value
 Handler_tmp_write	0
 Handler_write	0
-show status like '%_tmp%';
+show status like '%\_tmp%';
 Variable_name	Value
 Created_tmp_disk_tables	0
 Created_tmp_files	0

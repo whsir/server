@@ -1056,6 +1056,8 @@ typedef struct system_status_var
   double last_query_cost;
   double cpu_time, busy_time;
   uint32 threads_running;
+
+  /* Following variables are not cleared by FLUSH STATUS */
   ulonglong max_tmp_space_used;
   /* Memory used for thread local storage */
   int64 max_local_memory_used;
@@ -1079,12 +1081,12 @@ typedef struct system_status_var
 
 #define STATUS_OFFSET(A) offsetof(STATUS_VAR,A)
 /* Clear as part of flush */
-#define clear_up_to_tmp_space_used      STATUS_OFFSET(tmp_space_used)
+#define clear_for_flush_status      STATUS_OFFSET(tmp_space_used)
 /* Clear as part of startup */
-#define clear_up_to_memory_used         STATUS_OFFSET(local_memory_used)
+#define clear_for_new_connection         STATUS_OFFSET(local_memory_used)
 /* Full initialization. Note that global_memory_used is updated early! */
-#define clear_up_to_global_memory_used  STATUS_OFFSET(global_memory_used)
-#define last_restored_status_var        clear_up_to_tmp_space_used
+#define clear_for_server_start  STATUS_OFFSET(global_memory_used)
+#define last_restored_status_var        clear_for_flush_status
 
 
 /** Number of contiguous global status variables */

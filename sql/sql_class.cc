@@ -1316,7 +1316,7 @@ void THD::init()
   reset_current_stmt_binlog_format_row();
   reset_binlog_local_stmt_filter();
   /* local_memory_used was setup in THD::THD() */
-  set_status_var_init(clear_up_to_memory_used);
+  set_status_var_init(clear_for_new_connection);
   status_var.max_local_memory_used= status_var.local_memory_used;
   bzero((char *) &org_status_var, sizeof(org_status_var));
   status_in_global= 0;
@@ -4572,7 +4572,7 @@ void thd_increment_bytes_received(void *thd, size_t length)
 /*
   Clear status variables
 
-  @param offset How much to clear. See clear_up_to_tmp_space_used
+  @param offset How much to clear. See clear_for_flush_status
 */
 
 void THD::set_status_var_init(ulong offset)

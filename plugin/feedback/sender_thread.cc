@@ -258,7 +258,7 @@ ret:
     */
     server_threads.erase(thd);
     DBUG_ASSERT(thd->status_var.tmp_space_used == 0);
-    thd->set_status_var_init(clear_up_to_memory_used);
+    thd->set_status_var_init(clear_for_new_connection);
     thd->killed= KILL_CONNECTION;
     delete thd;
     thd= 0;
