@@ -1150,6 +1150,7 @@ static dict_table_t *trx_purge_table_acquire(dict_table_t *table,
   size_t db_len= dict_get_db_name_len(table->name.m_name);
   if (db_len == 0)
   {
+#ifdef WITH_INNODB_FOREIGN_UPGRADE
     if (table == dict_sys.sys_foreign || table == dict_sys.sys_foreign_cols)
     {
       /*
@@ -1174,6 +1175,7 @@ static dict_table_t *trx_purge_table_acquire(dict_table_t *table,
           goto must_wait;
       }
     }
+#endif /* WITH_INNODB_FOREIGN_UPGRADE */
     return table; /* InnoDB system tables are not covered by MDL */
   }
 
@@ -1530,6 +1532,7 @@ TRANSACTIONAL_TARGET ulint trx_purge(ulint n_tasks, ulint history_size)
 		node->tables.clear();
 	}
 
+#ifdef WITH_INNODB_FOREIGN_UPGRADE
 	trx_t *trx= thd_to_trx(thd);
         if (trx && trx->state == TRX_STATE_ACTIVE)
         {
@@ -1541,6 +1544,7 @@ TRANSACTIONAL_TARGET ulint trx_purge(ulint n_tasks, ulint history_size)
           if (err != DB_SUCCESS)
             return err;
         }
+#endif /* WITH_INNODB_FOREIGN_UPGRADE */
 
 	purge_sys.batch_cleanup(head);
 

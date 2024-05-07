@@ -1330,8 +1330,10 @@ public:
     SYS_INDEXES,
     SYS_COLUMNS,
     SYS_FIELDS,
+#ifdef WITH_INNODB_FOREIGN_UPGRADE
     SYS_FOREIGN,
     SYS_FOREIGN_COLS,
+#endif /* WITH_INNODB_FOREIGN_UPGRADE */
     SYS_VIRTUAL
   };
   /** System table names */
@@ -1368,7 +1370,7 @@ public:
       (!create_foreign || (sys_foreign && sys_foreign_cols)));
   }
 #else
-  bool sys_tables_exist() const
+  bool sys_tables_exist(bool create_foreign= false) const
   { return UNIV_LIKELY((bool) sys_virtual); }
 #endif /* !WITH_INNODB_FOREIGN_UPGRADE */
 
