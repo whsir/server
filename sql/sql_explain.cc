@@ -1723,7 +1723,7 @@ static void trace_engine_stats(handler *file, Json_writer *writer)
       writer->add_member("pages_read_count").add_ull(hs->pages_read_count);
     if (hs->pages_read_time)
       writer->add_member("pages_read_time_ms").
-        add_double(hs->pages_read_time / 1000.0);
+        add_double(hs->pages_read_time * 1000. / timer_tracker_frequency());
     if (hs->undo_records_read)
       writer->add_member("old_rows_read").add_ull(hs->undo_records_read);
     writer->end_object();
