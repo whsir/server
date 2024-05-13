@@ -10676,11 +10676,7 @@ bool TABLE_SHARE::fk_check_consistency(THD *thd, bool repair)
     if (!sa.share)
     {
       if (!ha_table_exists(thd, &rk.foreign_db, &rk.foreign_table))
-      {
-        // FIXME: replace ER_UNKNOWN_ERROR with error codes here and below
-        my_printf_error(ER_UNKNOWN_ERROR, "Foreign table %s.%s not exists",
-                        MYF(0), rk.foreign_db.str, rk.foreign_table.str);
-      }
+        my_error(ER_FK_NOT_EXISTS, MYF(0), rk.foreign_db.str, rk.foreign_table.str);
       return true;
     }
     List_iterator_fast<FK_info> fk_it(sa.share->foreign_keys);
@@ -10705,13 +10701,8 @@ bool TABLE_SHARE::fk_check_consistency(THD *thd, bool repair)
       if (!warned.insert(Table_name(rk.foreign_db, rk.foreign_table), &warn))
         return true;
       if (warn)
-      {
-        my_printf_error(ER_UNKNOWN_ERROR,
-                        found_table ?
-                          "Foreign table %s.%s does not match foreign keys with referenced keys" :
-                          "Foreign table %s.%s does not refer this table",
-                        MYF(0), sa.share->db.str, sa.share->table_name.str);
-      }
+        my_error(found_table ? ER_FK_NOT_MATCHES : ER_FK_NOT_REFERS,
+                 MYF(0), sa.share->db.str, sa.share->table_name.str);
       DBUG_ASSERT(warn || error);
       error= true;
     }
@@ -10723,8 +10714,8 @@ bool TABLE_SHARE::fk_check_consistency(THD *thd, bool repair)
   if (referenced_keys.elements)
   {
     push_warning_printf(thd, Sql_condition::WARN_LEVEL_NOTE,
-                        ER_UNKNOWN_ERROR,
-                        "Found %u referenced keys",
+                        WARN_FK_FOUND_REFERENCES,
+                        ER_THD(thd, WARN_FK_FOUND_REFERENCES),
                         referenced_keys.elements);
   }
 
@@ -10738,11 +10729,7 @@ bool TABLE_SHARE::fk_check_consistency(THD *thd, bool repair)
         if (!warned_self.insert(Table_name(fk.foreign_db, fk.foreign_table), &warn))
           return true;
         if (warn)
-        {
-          my_printf_error(ER_UNKNOWN_ERROR,
-                          "Self-reference in foreign list %s.%s does not point to this table",
-                          MYF(0), fk.foreign_db, fk.foreign_table);
-        }
+          my_error(ER_FK_WRONG_SELFREF, MYF(0), fk.foreign_db, fk.foreign_table);
         DBUG_ASSERT(warn || error);
         error= true;
       }
@@ -10797,8 +10784,7 @@ bool TABLE_SHARE::fk_check_consistency(THD *thd, bool repair)
     {
       if (!ha_table_exists(thd, fk.ref_db_ptr(), &fk.referenced_table))
       {
-        my_printf_error(ER_UNKNOWN_ERROR, "Referenced table %s.%s not exists",
-                        MYF(0), fk.ref_db().str, fk.referenced_table.str);
+        my_error(ER_FK_REF_NOT_EXISTS, MYF(0), fk.ref_db().str, fk.referenced_table.str);
       }
       return true;
     }
@@ -10855,11 +10841,8 @@ bool TABLE_SHARE::fk_check_consistency(THD *thd, bool repair)
           return true;
         if (warn)
         {
-          my_printf_error(ER_UNKNOWN_ERROR,
-                          found_table ?
-                            "Referenced table %s.%s does not match referenced keys with foreign keys" :
-                            "Referenced table %s.%s does not refer this table", MYF(0),
-                          sa.share->db.str, sa.share->table_name.str);
+          my_error(found_table ? ER_FK_REF_NOT_MATCHES : ER_FK_NOT_MATCHES, MYF(0),
+                   sa.share->db.str, sa.share->table_name.str);
         }
         DBUG_ASSERT(warn || error);
         error= true;
@@ -10870,24 +10853,22 @@ bool TABLE_SHARE::fk_check_consistency(THD *thd, bool repair)
   if (foreign_keys.elements - fk_self_refs)
   {
     push_warning_printf(thd, Sql_condition::WARN_LEVEL_NOTE,
-                        ER_UNKNOWN_ERROR,
-                        "Found %u foreign keys",
+                        WARN_FK_FOUND,
+                        ER_THD(thd, WARN_FK_FOUND),
                         foreign_keys.elements - fk_self_refs);
   }
 
   if (rk_self_refs)
   {
-    my_printf_error(ER_UNKNOWN_ERROR,
-                    "Found %u self-references in referenced list (must be 0)",
-                    MYF(0), rk_self_refs);
+    my_error(ER_FK_UNEXPECTED_SELFREFS, MYF(0), rk_self_refs);
     error= true;
   }
 
   if (fk_self_refs)
   {
     push_warning_printf(thd, Sql_condition::WARN_LEVEL_NOTE,
-                        ER_UNKNOWN_ERROR,
-                        "Found %u self-references",
+                        WARN_FK_FOUND_SELFREFS,
+                        ER_THD(thd, WARN_FK_FOUND_SELFREFS),
                         fk_self_refs);
   }
 
@@ -10927,7 +10908,8 @@ bool TABLE_SHARE::fk_check_consistency(THD *thd, bool repair)
     }
     if (!error && count)
       push_warning_printf(thd, Sql_condition::WARN_LEVEL_NOTE,
-                          ER_UNKNOWN_ERROR, "Updated %u referenced shares", count);
+                          WARN_FK_UPDATED_SHARES,
+                          ER_THD(thd, WARN_FK_UPDATED_SHARES), count);
 
   }
 
