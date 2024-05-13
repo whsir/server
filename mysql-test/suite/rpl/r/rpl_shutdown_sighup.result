@@ -41,7 +41,6 @@ set debug_sync="now signal refresh_logs";
 shutdown;
 connection server_2;
 connection slave;
-include/assert_grep.inc [Ensure warning is issued that signal handler thread is still processing]
 #
 # Cleanup
 connection master;

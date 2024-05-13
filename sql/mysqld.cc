@@ -2081,39 +2081,29 @@ static void clean_up(bool print_message)
 
 #ifndef EMBEDDED_LIBRARY
 
-/**
-  This is mainly needed when running with purify, but it's still nice to
-  know that all child threads have died when mysqld exits.
-*/
 static void wait_for_signal_thread_to_end()
 {
-  uint i, n_waits= DBUG_EVALUATE("force_sighup_processing_timeout", 5, 100);
-  int err= 0;
+  if (!signal_thread_in_use)
+    return;
+
   /*
-    Wait up to 10 seconds for signal thread to die. We use this mainly to
-    avoid getting warnings that my_thread_end has not been called
+    POSIX on Linux allows for segfault if thread's lifetime already over.
+    Union of error codes on macOS, Linux, and FreeBSD are:
+      ESRCH - thread is invalid
+      EINVAL - sig is unsupported
+      ENOTSUP - thread not created by pthread_create, cannot be pthread_kill'd
+    EINVAL is not expected because the kill signal is supported.  Every other
+    error that pthread_kill could emit concerns the existence of the target
+    thread--for our purposes, it either exists and can be killed or it doesn't
+    exist.  We won't join in the event of any of these other errors because
+    there's nothing for us to join on.  pthread_join will block indefinitely,
+    until all processing (SIGHUP included) has completed in the signal_hand
+    thread.
   */
-  for (i= 0 ; i < n_waits && signal_thread_in_use; i++)
-  {
-    err= pthread_kill(signal_thread, MYSQL_KILL_SIGNAL);
-    if (err)
-      break;
-    my_sleep(100000); // Give it time to die, .1s per iteration
-  }
-
-  if (err && err != ESRCH)
-  {
-    sql_print_error("Failed to send kill signal to signal handler thread, "
-                    "pthread_kill() errno: %d", err);
-  }
-
-  if (i == n_waits && signal_thread_in_use && !opt_bootstrap)
-  {
-    sql_print_warning("Signal handler thread did not exit in a timely manner. "
-                      "Continuing to wait for it to stop..");
-    pthread_join(signal_thread, NULL);
-  }
+  if (!pthread_kill(signal_thread, MYSQL_KILL_SIGNAL))
+    pthread_join(signal_thread, nullptr);
 }
+
 #endif /*EMBEDDED_LIBRARY*/
 
 static void clean_up_mutexes()
@@ -2960,8 +2950,16 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
 {
   sigset_t set;
   int sig;
-  my_thread_init();				// Init new thread
+
+  // thread is created, otherwise execution wouldn't reach this point
   signal_thread_in_use= 1;
+
+  // initialize this newly created thread
+  if (my_thread_init()) {
+    // there was an error during init, abort
+    signal_thread_in_use= 0;
+    return nullptr;
+  }
 
   /*
     Setup alarm handler
@@ -3035,6 +3033,11 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
         PSI_CALL_delete_current_thread();
         my_sigset(sig, SIG_IGN);
         break_connect_loop(); // MIT THREAD has a alarm thread
+
+        my_thread_end();
+        signal_thread_in_use= 0;
+        pthread_exit(0);				// Safety
+        return 0;                                 // Avoid compiler warnings
       }
       break;
     case SIGHUP:
