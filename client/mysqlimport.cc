@@ -35,12 +35,13 @@
 #include "mysql_version.h"
 
 #include <welcome_copyright_notice.h>   /* ORACLE_WELCOME_COPYRIGHT_NOTICE */
-
-
-/* Global Thread counter */
-uint multithreaded= 0;
-
+#include <string>
+#include <fstream>
+#include <sstream>
 #include <tpool.h>
+#include <vector>
+
+uint multithreaded= 0;
 tpool::thread_pool *thread_pool;
 
 static void db_error_with_table(MYSQL *mysql, char *table);
@@ -63,16 +64,23 @@ static uint     opt_mysql_port= 0, opt_protocol= 0;
 static char * opt_mysql_unix_port=0;
 static char *opt_plugin_dir= 0, *opt_default_auth= 0;
 static longlong opt_ignore_lines= -1;
+static my_bool opt_create_tables= 0;
 
 #include <sslopt-vars.h>
 
 static char **argv_to_free;
+static void safe_exit(int error, MYSQL *mysql);
+static void set_exitcode(int code);
 
 static struct my_option my_long_options[] =
 {
   {"character-sets-dir", OPT_CHARSETS_DIR,
    "Directory for character set files.", (char**) &charsets_dir,
    (char**) &charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+  {"create", 0, "Create tables before loading data."
+  "Expects CREATE TABLE code in <table_name>.sql file next to the input file",
+  &opt_create_tables, &opt_create_tables, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+
   {"default-character-set", OPT_DEFAULT_CHARSET,
    "Set the default character set.", &default_charset,
    &default_charset, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -324,13 +332,145 @@ static int get_options(int *argc, char ***argv)
   return(0);
 }
 
+/**
+  Quote an identifier, e.g table name, or dbname
 
+  Adds ` around the string, and replaces with ` with `` inside the string
+*/
+static std::string quote_identifier(const char *name)
+{
+  std::string res;
+  res.reserve(strlen(name)+2);
+  res+= '`';
+  for (const char *p= name; *p; p++)
+  {
+    if (*p == '`')
+      res += '`';
+    res += *p;
+  }
+  res += '`';
+  return res;
+}
+
+/**
+  Execute an script from a file
+
+  @param mysql the connection to the server
+  @param filename the name of the file to execute
+
+  @note CLIENT_MULTI_STATEMENTS must be set in the connection,
+  since we're executing potentially multiple statements
+
+  @return 0 on success, 1 on error
+*/
+static int execute_sql_script(MYSQL *mysql, const char *filename)
+{
+  /*Read full file to string*/
+  std::ifstream t(filename);
+  std::stringstream sql;
+  sql << t.rdbuf();
+
+  /* Execute batch */
+  if (mysql_query(mysql, sql.str().c_str()))
+  {
+    my_printf_error(0, "Error: %d, %s, when using script: %s", MYF(0),
+                    mysql_errno(mysql), mysql_error(mysql), filename);
+    safe_exit(1, mysql);
+    return 1;
+  }
+
+  /* After we executed multi-statement batch, we need to read/check all results. */
+  for (;;)
+  {
+    int res= mysql_next_result(mysql);
+    switch (res)
+    {
+    case -1:
+      return 0;
+    case 0:
+      break;
+    default:
+      db_error(mysql);
+      return 1;
+    }
+  }
+  return 0;
+}
+
+/*
+  Create a table, using  a script .sql file,
+  which was created by mysqldump, using --tab/--dir option
+
+  @param mysql  - connection to the server
+  @param dbname - name of the database
+  @param quoted_tablename -  name of the table, identifier-style quoted
+  @param file_to_load  - name of the file that we want load, with .txt extension
+   Name of the script sql file is derived from it - SQL script that we'll
+   execute must be in the same directory as file_to_load, and have the same
+   name, but with .sql extension
+*/
+static int create_table(MYSQL *mysql, const char *dbname,
+                       const char *quoted_tablename, const char *file_to_load)
+{
+  /*
+    Check that file_to_load has valid name (.txt extension), and exists
+    Otherwise we should not bother to create the table, and possibly
+    database, if it won't load anyway
+  */
+  size_t len= strlen(file_to_load);
+  if (len < 5 || strcmp(file_to_load + len - 4, ".txt"))
+  {
+    my_printf_error(0, "Can't create table to %s", MYF(0), file_to_load);
+    safe_exit(1, mysql);
+    return 1;
+  }
+  if (access(file_to_load, R_OK))
+  {
+    my_printf_error(0, "Can't read file %s", MYF(0), file_to_load);
+    safe_exit(1, mysql);
+    return 1;
+  }
+
+  /*Check that .sql file exists next to .txt file */
+  std::string sql_file(file_to_load, len - 4);
+  sql_file += ".sql";
+  if (access(sql_file.c_str(), R_OK))
+  {
+    my_printf_error(0, "Can't read file %s", MYF(0), sql_file.c_str());
+    safe_exit(1, mysql);
+    return 1;
+  }
+
+  if (mysql_select_db(mysql, dbname))
+  {
+    /* Create database if it does not yet exist */
+    std::string create_db_if_not_exists= "CREATE DATABASE IF NOT EXISTS ";
+    create_db_if_not_exists += quote_identifier(dbname);
+    if (mysql_query(mysql, create_db_if_not_exists.c_str()))
+      db_error(mysql);
+    if(mysql_select_db(mysql, dbname))
+      db_error(mysql);
+    return 1;
+  }
+
+  /* Remove table if it already exists, it will be recreated, reloaded */
+  std::string drop_table_if_exists= "DROP TABLE IF EXISTS ";
+  drop_table_if_exists += quoted_tablename;
+  if (mysql_query(mysql, drop_table_if_exists.c_str()))
+  {
+    db_error(mysql);
+    return 1;
+  }
+
+  /* Finally, execute CREATE TABLE code from .sql file */
+  return execute_sql_script(mysql, sql_file.c_str());
+}
 
 static int write_to_table(char *filename, MYSQL *mysql)
 {
   char tablename[FN_REFLEN], hard_path[FN_REFLEN],
        escaped_name[FN_REFLEN * 2 + 1],
-       sql_statement[FN_REFLEN*16+256], *end, *pos;
+       sql_statement[FN_REFLEN*16+256], *end;
   DBUG_ENTER("write_to_table");
   DBUG_PRINT("enter",("filename: %s",filename));
 
@@ -371,15 +511,12 @@ static int write_to_table(char *filename, MYSQL *mysql)
     end= strmov(end, " REPLACE");
   if (ignore)
     end= strmov(end, " IGNORE");
-  end= strmov(end, " INTO TABLE `");
-  /* Turn any ` into `` in table name. */
-  for (pos= tablename; *pos; pos++)
-  {
-    if (*pos == '`')
-      *end++= '`';
-    *end++= *pos;
-  }
-  end= strmov(end, "`");
+  end= strmov(end, " INTO TABLE ");
+  std::string full_tablename=quote_identifier(current_db);
+  full_tablename += ".";
+  full_tablename += quote_identifier(tablename);
+
+  end= strmov(end,full_tablename.c_str());
 
   if (fields_terminated || enclosed || opt_enclosed || escaped)
       end= strmov(end, " FIELDS");
@@ -395,6 +532,12 @@ static int write_to_table(char *filename, MYSQL *mysql)
   if (opt_columns)
     end= strmov(strmov(strmov(end, " ("), opt_columns), ")");
   *end= '\0';
+
+  if (opt_create_tables)
+  {
+    if (create_table(mysql, current_db, full_tablename.c_str(), filename))
+      DBUG_RETURN(1);
+  }
 
   if (mysql_query(mysql, sql_statement))
   {
@@ -476,7 +619,7 @@ static MYSQL *db_connect(char *host, char *database,
                  "program_name", "mysqlimport");
   if (!(mysql_real_connect(mysql,host,user,passwd,
                            database,opt_mysql_port,opt_mysql_unix_port,
-                           0)))
+                           opt_create_tables?CLIENT_MULTI_STATEMENTS:0)))
   {
     ignore_errors=0;	  /* NO RETURN FROM db_error */
     db_error(mysql);
@@ -605,17 +748,12 @@ void set_exitcode(int code)
   exitcode.compare_exchange_strong(expected,code);
 }
 
-thread_local MYSQL *thread_local_mysql;
+static thread_local MYSQL *thread_local_mysql;
 
 void load_single_table(void *arg)
 {
   int error;
-  char *raw_table_name= (char *)arg;
-  MYSQL *mysql= thread_local_mysql;
-  /*
-    We are not currently catching the error here.
-  */
-  if((error= write_to_table(raw_table_name, mysql)))
+  if((error= write_to_table((char *)arg, thread_local_mysql)))
     set_exitcode(error);
 }
 

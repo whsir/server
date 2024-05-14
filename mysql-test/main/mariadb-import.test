@@ -1,0 +1,8 @@
+create table t1(i int);
+insert t1 values(100);
+--exec $MYSQL_DUMP --tab=$MYSQLTEST_VARDIR/tmp/ test
+drop table t1;
+--exec $MYSQL_IMPORT --create test $MYSQLTEST_VARDIR/tmp/t1.txt
+select * from t1;
+drop table t1;
+
