@@ -510,7 +510,7 @@ static Sys_var_mybool Sys_automatic_sp_privileges(
 static Sys_var_ulong Sys_back_log(
        "back_log", "The number of outstanding connection requests "
        "MariaDB can have. This comes into play when the main MariaDB thread "
-       "gets very many connection requests in a very short time",
+       "gets many connection requests in a very short time",
        AUTO_SET READ_ONLY GLOBAL_VAR(back_log), CMD_LINE(REQUIRED_ARG),
        VALID_RANGE(0, 65535), DEFAULT(150), BLOCK_SIZE(1));
 
@@ -750,7 +750,7 @@ static Sys_var_bit Sys_explicit_defaults_for_timestamp(
 
 static Sys_var_ulonglong Sys_bulk_insert_buff_size(
        "bulk_insert_buffer_size", "Size of tree cache used in bulk "
-       "insert optimisation. Note that this is a limit per thread!",
+       "insert optimization. Note that this is a limit per thread!",
        SESSION_VAR(bulk_insert_buff_size), CMD_LINE(REQUIRED_ARG),
        VALID_RANGE(0, SIZE_T_MAX), DEFAULT(8192*1024), BLOCK_SIZE(1));
 
@@ -1041,7 +1041,7 @@ static Sys_var_on_access_global<Sys_var_ulong,
                                 PRIV_SET_SYSTEM_GLOBAL_VAR_CONNECT_TIMEOUT>
 Sys_connect_timeout(
        "connect_timeout",
-       "The number of seconds the mysqld server is waiting for a connect "
+       "The number of seconds the MariaDB server is waiting for a connect "
        "packet before responding with 'Bad handshake'",
        GLOBAL_VAR(connect_timeout), CMD_LINE(REQUIRED_ARG),
        VALID_RANGE(2, LONG_TIMEOUT), DEFAULT(CONNECT_TIMEOUT), BLOCK_SIZE(1));
@@ -1507,7 +1507,7 @@ static Sys_var_keycache Sys_key_cache_file_hash_size(
 
 static Sys_var_mybool Sys_large_files_support(
        "large_files_support",
-       "Whether mysqld was compiled with options for large file support",
+       "Whether mariadbd was compiled with options for large file support",
        READ_ONLY GLOBAL_VAR(opt_large_files),
        CMD_LINE_HELP_ONLY, DEFAULT(sizeof(my_off_t) > 4));
 
@@ -1543,7 +1543,7 @@ static Sys_var_ulong Sys_lock_wait_timeout(
 #ifdef HAVE_MLOCKALL
 static Sys_var_mybool Sys_locked_in_memory(
        "locked_in_memory",
-       "Whether mysqld was locked in memory with --memlock",
+       "Whether mariadbd process was locked in memory with --memlock",
        READ_ONLY GLOBAL_VAR(locked_in_memory), NO_CMD_LINE, DEFAULT(FALSE));
 #endif
 
@@ -2853,9 +2853,9 @@ export sys_var *Sys_old_passwords_ptr= &Sys_old_passwords; // for sql_acl.cc
 
 static Sys_var_ulong Sys_open_files_limit(
        "open_files_limit",
-       "If this is not 0, then mysqld will use this value to reserve file "
+       "If this is not 0, then mariadbd will use this value to reserve file "
        "descriptors to use with setrlimit(). If this value is 0 or autoset "
-       "then mysqld will reserve max_connections*5 or max_connections + "
+       "then mariadbd will reserve max_connections*5 or max_connections + "
        "table_cache*2 (whichever is larger) number of file descriptors",
        AUTO_SET READ_ONLY GLOBAL_VAR(open_files_limit), CMD_LINE(REQUIRED_ARG),
        VALID_RANGE(0, OS_FILE_LIMIT), DEFAULT(0), BLOCK_SIZE(1));
@@ -2998,7 +2998,7 @@ static Sys_var_ulong Sys_optimizer_adjust_secondary_key_costs(
     DEPRECATED(1100, ""));
 
 static Sys_var_charptr_fscs Sys_pid_file(
-       "pid_file", "Pid file used by safe_mysqld",
+       "pid_file", "Pid file used by mariadbd-safe",
        READ_ONLY GLOBAL_VAR(pidfile_name_ptr), CMD_LINE(REQUIRED_ARG),
        DEFAULT(0));
 
@@ -3784,7 +3784,7 @@ static Sys_var_on_access_global<Sys_var_uint,
                PRIV_SET_SYSTEM_GLOBAL_VAR_RPL_SEMI_SYNC_SLAVE_KILL_CONN_TIMEOUT>
 Sys_semisync_slave_kill_conn_timeout(
        "rpl_semi_sync_slave_kill_conn_timeout",
-       "Timeout for the mysql connection used to kill the slave io_thread's "
+       "Timeout for the MariaDB connection used to kill the slave io_thread's "
        "connection on master. This timeout comes into play when stop slave "
        "is executed",
        GLOBAL_VAR(rpl_semi_sync_slave_kill_conn_timeout),
@@ -5138,9 +5138,9 @@ Sys_proxy_protocol_networks(
     "proxy_protocol_networks", "Enable proxy protocol for these source "
     "networks. The syntax is a comma separated list of IPv4 and IPv6 "
     "networks. If the network doesn't contain mask, it is considered to be "
-    "a single host. \"*\" represents all networks and must the only "
-    "directive on the line. String \"localhost\" represents non-TCP "
-    "local connections (Unix domain socket, Windows named pipe or shared memory)",
+    "a single host. \"*\" represents all networks and must be the only "
+    "directive on the line. String \"localhost\" represents non-TCP local "
+    "connections (Unix domain socket, Windows named pipe or shared memory)",
     GLOBAL_VAR(my_proxy_protocol_networks), CMD_LINE(REQUIRED_ARG),
     DEFAULT(""), NO_MUTEX_GUARD, NOT_IN_BINLOG,
     ON_CHECK(check_proxy_protocol_networks), ON_UPDATE(fix_proxy_protocol_networks));
@@ -5320,7 +5320,7 @@ static Sys_var_have Sys_have_rtree_keys(
 static Sys_var_have Sys_have_ssl(
        "have_ssl", "If the server supports secure connections, will be set to YES, "
        "otherwise will be set to NO. If set to DISABLED, the server was compiled with "
-       "TLS support, but was not started with TLS support (see the mysqld options). "
+       "TLS support, but was not started with TLS support (see the mariadbd options). "
        "See also have_openssl",
        READ_ONLY GLOBAL_VAR(have_ssl), NO_CMD_LINE);
 
@@ -6597,7 +6597,10 @@ static const char *log_slow_filter_names[]=
 
 static Sys_var_set Sys_log_slow_filter(
        "log_slow_filter",
-       "Log only certain types of queries to the slow log. If variable empty all kind of queries are logged.  All types are bound by slow_query_time, except 'not_using_index' which is always logged if enabled",
+       "Log only certain types of queries to the slow log. If variable "
+       "is empty all kinds of queries are logged.  All types are bound by "
+       "slow_query_time, except 'not_using_index' which is always logged "
+       "if enabled",
        SESSION_VAR(log_slow_filter), CMD_LINE(REQUIRED_ARG),
        log_slow_filter_names,
        /* by default we log all queries except 'not_using_index' */
@@ -6871,12 +6874,11 @@ Sys_binlog_row_image(
        "before and after image are logged. 'FULL_NODUP', means that all "
        "columns are logged in before image, but only changed columns or all "
        "columns of inserted record are logged in after image, "
-       "'NOBLOB', means that mysqld avoids logging "
+       "'NOBLOB', means that MariaDB avoids logging "
        "blob columns whenever possible (eg, blob column was not changed or "
        "is not part of primary key). 'MINIMAL', means that a PK equivalent (PK "
        "columns or full row if there is no PK in the table) is logged in the "
-       "before image, and only changed columns are logged in the after image. "
-       "(Default: FULL)",
+       "before image, and only changed columns are logged in the after image",
        SESSION_VAR(binlog_row_image), CMD_LINE(REQUIRED_ARG),
        binlog_row_image_names, DEFAULT(BINLOG_ROW_IMAGE_FULL));
 

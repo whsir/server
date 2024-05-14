@@ -305,7 +305,7 @@ COMMAND_LINE_ARGUMENT	OPTIONAL
 VARIABLE_NAME	BACK_LOG
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	BIGINT UNSIGNED
-VARIABLE_COMMENT	The number of outstanding connection requests MariaDB can have. This comes into play when the main MariaDB thread gets very many connection requests in a very short time
+VARIABLE_COMMENT	The number of outstanding connection requests MariaDB can have. This comes into play when the main MariaDB thread gets many connection requests in a very short time
 NUMERIC_MIN_VALUE	0
 NUMERIC_MAX_VALUE	65535
 NUMERIC_BLOCK_SIZE	1
@@ -525,7 +525,7 @@ COMMAND_LINE_ARGUMENT	REQUIRED
 VARIABLE_NAME	BINLOG_ROW_IMAGE
 VARIABLE_SCOPE	SESSION
 VARIABLE_TYPE	ENUM
-VARIABLE_COMMENT	Controls whether rows should be logged in 'FULL', 'FULL_NODUP', 'NOBLOB' or 'MINIMAL' formats. 'FULL', means that all columns in the before and after image are logged. 'FULL_NODUP', means that all columns are logged in before image, but only changed columns or all columns of inserted record are logged in after image, 'NOBLOB', means that mysqld avoids logging blob columns whenever possible (eg, blob column was not changed or is not part of primary key). 'MINIMAL', means that a PK equivalent (PK columns or full row if there is no PK in the table) is logged in the before image, and only changed columns are logged in the after image. (Default: FULL)
+VARIABLE_COMMENT	Controls whether rows should be logged in 'FULL', 'FULL_NODUP', 'NOBLOB' or 'MINIMAL' formats. 'FULL', means that all columns in the before and after image are logged. 'FULL_NODUP', means that all columns are logged in before image, but only changed columns or all columns of inserted record are logged in after image, 'NOBLOB', means that MariaDB avoids logging blob columns whenever possible (eg, blob column was not changed or is not part of primary key). 'MINIMAL', means that a PK equivalent (PK columns or full row if there is no PK in the table) is logged in the before image, and only changed columns are logged in the after image
 NUMERIC_MIN_VALUE	NULL
 NUMERIC_MAX_VALUE	NULL
 NUMERIC_BLOCK_SIZE	NULL
@@ -575,7 +575,7 @@ COMMAND_LINE_ARGUMENT	REQUIRED
 VARIABLE_NAME	BULK_INSERT_BUFFER_SIZE
 VARIABLE_SCOPE	SESSION
 VARIABLE_TYPE	BIGINT UNSIGNED
-VARIABLE_COMMENT	Size of tree cache used in bulk insert optimisation. Note that this is a limit per thread!
+VARIABLE_COMMENT	Size of tree cache used in bulk insert optimization. Note that this is a limit per thread!
 NUMERIC_MIN_VALUE	0
 NUMERIC_MAX_VALUE	18446744073709551615
 NUMERIC_BLOCK_SIZE	1
@@ -775,7 +775,7 @@ COMMAND_LINE_ARGUMENT	OPTIONAL
 VARIABLE_NAME	CONNECT_TIMEOUT
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	BIGINT UNSIGNED
-VARIABLE_COMMENT	The number of seconds the mysqld server is waiting for a connect packet before responding with 'Bad handshake'
+VARIABLE_COMMENT	The number of seconds the MariaDB server is waiting for a connect packet before responding with 'Bad handshake'
 NUMERIC_MIN_VALUE	2
 NUMERIC_MAX_VALUE	31536000
 NUMERIC_BLOCK_SIZE	1
@@ -1385,7 +1385,7 @@ COMMAND_LINE_ARGUMENT	NULL
 VARIABLE_NAME	HAVE_SSL
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	VARCHAR
-VARIABLE_COMMENT	If the server supports secure connections, will be set to YES, otherwise will be set to NO. If set to DISABLED, the server was compiled with TLS support, but was not started with TLS support (see the mysqld options). See also have_openssl
+VARIABLE_COMMENT	If the server supports secure connections, will be set to YES, otherwise will be set to NO. If set to DISABLED, the server was compiled with TLS support, but was not started with TLS support (see the mariadbd options). See also have_openssl
 NUMERIC_MIN_VALUE	NULL
 NUMERIC_MAX_VALUE	NULL
 NUMERIC_BLOCK_SIZE	NULL
@@ -1675,7 +1675,7 @@ COMMAND_LINE_ARGUMENT	REQUIRED
 VARIABLE_NAME	LARGE_FILES_SUPPORT
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	BOOLEAN
-VARIABLE_COMMENT	Whether mysqld was compiled with options for large file support
+VARIABLE_COMMENT	Whether mariadbd was compiled with options for large file support
 NUMERIC_MIN_VALUE	NULL
 NUMERIC_MAX_VALUE	NULL
 NUMERIC_BLOCK_SIZE	NULL
@@ -1775,7 +1775,7 @@ COMMAND_LINE_ARGUMENT	OPTIONAL
 VARIABLE_NAME	LOCKED_IN_MEMORY
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	BOOLEAN
-VARIABLE_COMMENT	Whether mysqld was locked in memory with --memlock
+VARIABLE_COMMENT	Whether mariadbd process was locked in memory with --memlock
 NUMERIC_MIN_VALUE	NULL
 NUMERIC_MAX_VALUE	NULL
 NUMERIC_BLOCK_SIZE	NULL
@@ -1925,7 +1925,7 @@ COMMAND_LINE_ARGUMENT	REQUIRED
 VARIABLE_NAME	LOG_SLOW_FILTER
 VARIABLE_SCOPE	SESSION
 VARIABLE_TYPE	SET
-VARIABLE_COMMENT	Log only certain types of queries to the slow log. If variable empty all kind of queries are logged.  All types are bound by slow_query_time, except 'not_using_index' which is always logged if enabled
+VARIABLE_COMMENT	Log only certain types of queries to the slow log. If variable is empty all kinds of queries are logged.  All types are bound by slow_query_time, except 'not_using_index' which is always logged if enabled
 NUMERIC_MIN_VALUE	NULL
 NUMERIC_MAX_VALUE	NULL
 NUMERIC_BLOCK_SIZE	NULL
@@ -2405,7 +2405,7 @@ COMMAND_LINE_ARGUMENT	REQUIRED
 VARIABLE_NAME	MYISAM_MMAP_SIZE
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	BIGINT UNSIGNED
-VARIABLE_COMMENT	Restricts the total memory used for memory mapping of MySQL tables
+VARIABLE_COMMENT	Restricts the total memory used for memory mapping of MyISAM tables
 NUMERIC_MIN_VALUE	7
 NUMERIC_MAX_VALUE	18446744073709551615
 NUMERIC_BLOCK_SIZE	1
@@ -2555,7 +2555,7 @@ COMMAND_LINE_ARGUMENT	OPTIONAL
 VARIABLE_NAME	OPEN_FILES_LIMIT
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	BIGINT UNSIGNED
-VARIABLE_COMMENT	If this is not 0, then mysqld will use this value to reserve file descriptors to use with setrlimit(). If this value is 0 or autoset then mysqld will reserve max_connections*5 or max_connections + table_cache*2 (whichever is larger) number of file descriptors
+VARIABLE_COMMENT	If this is not 0, then mariadbd will use this value to reserve file descriptors to use with setrlimit(). If this value is 0 or autoset then mariadbd will reserve max_connections*5 or max_connections + table_cache*2 (whichever is larger) number of file descriptors
 NUMERIC_MIN_VALUE	0
 NUMERIC_MAX_VALUE	4294967295
 NUMERIC_BLOCK_SIZE	1
@@ -3235,7 +3235,7 @@ COMMAND_LINE_ARGUMENT	REQUIRED
 VARIABLE_NAME	PID_FILE
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	VARCHAR
-VARIABLE_COMMENT	Pid file used by safe_mysqld
+VARIABLE_COMMENT	Pid file used by mariadbd-safe
 NUMERIC_MIN_VALUE	NULL
 NUMERIC_MAX_VALUE	NULL
 NUMERIC_BLOCK_SIZE	NULL
@@ -3325,7 +3325,7 @@ COMMAND_LINE_ARGUMENT	NULL
 VARIABLE_NAME	PROXY_PROTOCOL_NETWORKS
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	VARCHAR
-VARIABLE_COMMENT	Enable proxy protocol for these source networks. The syntax is a comma separated list of IPv4 and IPv6 networks. If the network doesn't contain mask, it is considered to be a single host. "*" represents all networks and must the only directive on the line. String "localhost" represents non-TCP local connections (Unix domain socket, Windows named pipe or shared memory)
+VARIABLE_COMMENT	Enable proxy protocol for these source networks. The syntax is a comma separated list of IPv4 and IPv6 networks. If the network doesn't contain mask, it is considered to be a single host. "*" represents all networks and must be the only directive on the line. String "localhost" represents non-TCP local connections (Unix domain socket, Windows named pipe or shared memory)
 NUMERIC_MIN_VALUE	NULL
 NUMERIC_MAX_VALUE	NULL
 NUMERIC_BLOCK_SIZE	NULL
@@ -3815,7 +3815,7 @@ COMMAND_LINE_ARGUMENT	OPTIONAL
 VARIABLE_NAME	RPL_SEMI_SYNC_SLAVE_KILL_CONN_TIMEOUT
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	INT UNSIGNED
-VARIABLE_COMMENT	Timeout for the mysql connection used to kill the slave io_thread's connection on master. This timeout comes into play when stop slave is executed
+VARIABLE_COMMENT	Timeout for the MariaDB connection used to kill the slave io_thread's connection on master. This timeout comes into play when stop slave is executed
 NUMERIC_MIN_VALUE	0
 NUMERIC_MAX_VALUE	4294967295
 NUMERIC_BLOCK_SIZE	1

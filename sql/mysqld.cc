@@ -890,7 +890,7 @@ static struct my_option pfs_early_options[]=
     GET_BOOL, OPT_ARG, TRUE, 0, 0, 0, 0, 0},
 #endif /* WITH_PERFSCHEMA_STORAGE_ENGINE */
   {"getopt-prefix-matching", 0,
-    "Recognize command-line options by their unambiguos prefixes",
+    "Recognize command-line options by their unambiguous prefixes",
     &my_getopt_prefix_matching, &my_getopt_prefix_matching, 0, GET_BOOL,
     NO_ARG, 1, 0, 1, 0, 0, 0}
 };
@@ -6402,7 +6402,7 @@ struct my_option my_long_options[]=
   {"help", '?', "Display this help and exit", 
    &opt_help, &opt_help, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
-  {"ansi", 'a', "Use ANSI SQL syntax instead of MySQL syntax. This mode "
+  {"ansi", 'a', "Use ANSI SQL syntax instead of MariaDB syntax. This mode "
    "will also set transaction isolation level 'serializable'", 0, 0, 0,
    GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   /*
@@ -6420,7 +6420,7 @@ struct my_option my_long_options[]=
    "Tells the master that updates to the given database should not be logged to the binary log",
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
 #ifndef DISABLE_GRANT_OPTIONS
-  {"bootstrap", OPT_BOOTSTRAP, "Used by mysql installation scripts", 0, 0, 0,
+  {"bootstrap", OPT_BOOTSTRAP, "Used by MariaDB installation scripts", 0, 0, 0,
    GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
 #endif
   {"character-set-client-handshake", 0,
@@ -6436,7 +6436,7 @@ struct my_option my_long_options[]=
   {"character-set-server", 'C', "Set the default character set",
    &default_character_set_name, &default_character_set_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"chroot", 'r', "Chroot mysqld daemon during startup",
+  {"chroot", 'r', "Chroot mariadbd process during startup",
    &mysqld_chroot, &mysqld_chroot, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   {"collation-server", 0, "Set the default collation",
@@ -6445,7 +6445,7 @@ struct my_option my_long_options[]=
   {"character-set-collations", 0, "Overrides for character set default collations",
    &character_set_collations_str, &character_set_collations_str,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"console", OPT_CONSOLE, "Write error output on screen; don't remove the console window on windows",
+  {"console", OPT_CONSOLE, "Write error output on screen; don't remove the console window on Windows",
    &opt_console, &opt_console, 0, GET_BOOL, NO_ARG, 0, 0, 0,
    0, 0, 0},
 #ifdef DBUG_OFF
@@ -6544,7 +6544,7 @@ struct my_option my_long_options[]=
    0, 0, 0, 0, 0, 0 },
   {"external-locking", 0, "Use system (external) locking (disabled by "
    "default).  With this option enabled you can run myisamchk to test "
-   "(not repair) tables while the MySQL server is running. Disable with "
+   "(not repair) tables while the MariaDB server is running. Disable with "
    "--skip-external-locking", &opt_external_locking, &opt_external_locking,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   /* We must always support the next option to make scripts like mysqltest
@@ -6638,7 +6638,7 @@ struct my_option my_long_options[]=
    &rpl_status, &rpl_status, &rpl_role_typelib,
    GET_ENUM, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
 #endif /* HAVE_REPLICATION */
-  {"memlock", 0, "Lock mysqld in memory", &locked_in_memory,
+  {"memlock", 0, "Lock mariadbd process in memory", &locked_in_memory,
    &locked_in_memory, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"old-style-user-limits", 0,
    "Enable old-style user limits (before 5.0.3, user resources were counted "
@@ -6792,7 +6792,7 @@ struct my_option my_long_options[]=
    &global_system_variables.tx_read_only,
    &global_system_variables.tx_read_only, 0,
    GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"user", 'u', "Run mysqld daemon as user", 0, 0, 0, GET_STR, REQUIRED_ARG,
+  {"user", 'u', "User to run mariadbd process as", 0, 0, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   {"verbose", 'v', "Used with --help option for detailed help",
    &opt_verbose, &opt_verbose, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -7699,7 +7699,7 @@ static void usage(void)
   puts("Starts the MariaDB database server.\n");
   printf("Usage: %s [OPTIONS]\n", my_progname);
   if (!opt_verbose)
-    puts("\nFor more help options (several pages), use mysqld --verbose --help.");
+    puts("\nFor more help options (several pages), use mariadbd --verbose --help.");
   else
   {
 #ifdef _WIN32
@@ -7728,7 +7728,8 @@ static void usage(void)
   }
 
     puts("\nTo see what variables a running server is using, type"
-         "\n'SELECT * FROM INFORMATION_SCHEMA.GLOBAL_VARIABLES' instead of 'mysqld --verbose --help' or 'mariadbd --verbose --help'.");
+         "\n'SELECT * FROM INFORMATION_SCHEMA.GLOBAL_VARIABLES' instead "
+         "of 'mariadbd --verbose --help'.");
   }
   DBUG_VOID_RETURN;
 }

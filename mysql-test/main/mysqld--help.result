@@ -20,7 +20,7 @@ The following specify which files/extra groups are read (specified before remain
  Percentage of rows from the table ANALYZE TABLE will
  sample to collect table statistics. Set to 0 to let
  MariaDB decide what percentage of rows to sample
- -a, --ansi          Use ANSI SQL syntax instead of MySQL syntax. This mode
+ -a, --ansi          Use ANSI SQL syntax instead of MariaDB syntax. This mode
  will also set transaction isolation level 'serializable'
  --auto-increment-increment[=#] 
  Auto-increment columns are incremented by this
@@ -34,7 +34,7 @@ The following specify which files/extra groups are read (specified before remain
  (Defaults to on; use --skip-automatic-sp-privileges to disable.)
  --back-log=#        The number of outstanding connection requests MariaDB can
  have. This comes into play when the main MariaDB thread
- gets very many connection requests in a very short time
+ gets many connection requests in a very short time
  (Automatically configured unless set explicitly)
  -b, --basedir=name  Path to installation directory. All paths are usually
  resolved relative to this
@@ -138,12 +138,12 @@ The following specify which files/extra groups are read (specified before remain
  logged. 'FULL_NODUP', means that all columns are logged
  in before image, but only changed columns or all columns
  of inserted record are logged in after image, 'NOBLOB',
- means that mysqld avoids logging blob columns whenever
+ means that MariaDB avoids logging blob columns whenever
  possible (eg, blob column was not changed or is not part
  of primary key). 'MINIMAL', means that a PK equivalent
  (PK columns or full row if there is no PK in the table)
  is logged in the before image, and only changed columns
- are logged in the after image. (Default: FULL)
+ are logged in the after image
  --binlog-row-metadata=name 
  Controls whether metadata is logged using FULL , MINIMAL
  format and NO_LOG.FULL causes all metadata to be logged;
@@ -163,9 +163,9 @@ The following specify which files/extra groups are read (specified before remain
  AES_DECRYPT() functions. One of: aes-128-ecb, aes-192-ecb,
  aes-256-ecb, aes-128-cbc, aes-192-cbc, aes-256-cbc, 
  aes-128-ctr, aes-192-ctr, aes-256-ctr
- --bootstrap         Used by mysql installation scripts
+ --bootstrap         Used by MariaDB installation scripts
  --bulk-insert-buffer-size=# 
- Size of tree cache used in bulk insert optimisation. Note
+ Size of tree cache used in bulk insert optimization. Note
  that this is a limit per thread!
  --character-set-client-handshake 
  Don't ignore client side character set value sent during
@@ -179,7 +179,7 @@ The following specify which files/extra groups are read (specified before remain
  Set the default character set
  --character-sets-dir=name 
  Directory where character sets are
- -r, --chroot=name   Chroot mysqld daemon during startup
+ -r, --chroot=name   Chroot mariadbd process during startup
  --collation-server=name 
  Set the default collation
  --column-compression-threshold=# 
@@ -218,7 +218,7 @@ The following specify which files/extra groups are read (specified before remain
  Use concurrent insert with MyISAM. One of: NEVER, AUTO, 
  ALWAYS
  --console           Write error output on screen; don't remove the console
- window on windows
+ window on Windows
  --core-file         Write core on crashes
  -h, --datadir=name  Path to the database root directory
  --deadlock-search-depth-long=# 
@@ -318,7 +318,7 @@ The following specify which files/extra groups are read (specified before remain
  (Defaults to on; use --skip-explicit-defaults-for-timestamp to disable.)
  --external-locking  Use system (external) locking (disabled by default). 
  With this option enabled you can run myisamchk to test
- (not repair) tables while the MySQL server is running.
+ (not repair) tables while the MariaDB server is running.
  Disable with --skip-external-locking
  --extra-max-connections=# 
  The number of connections on extra-port
@@ -351,7 +351,7 @@ The following specify which files/extra groups are read (specified before remain
  --general-log-file=name 
  Log connections and queries to given file
  --getopt-prefix-matching 
- Recognize command-line options by their unambiguos
+ Recognize command-line options by their unambiguous
  prefixes
  (Defaults to on; use --skip-getopt-prefix-matching to disable.)
  --group-concat-max-len=# 
@@ -545,10 +545,10 @@ The following specify which files/extra groups are read (specified before remain
  combinations
  --log-slow-filter=name 
  Log only certain types of queries to the slow log. If
- variable empty all kind of queries are logged.  All types
- are bound by slow_query_time, except 'not_using_index'
- which is always logged if enabled. Any combination of: 
- admin, filesort, filesort_on_disk, 
+ variable is empty all kinds of queries are logged.  All
+ types are bound by slow_query_time, except
+ 'not_using_index' which is always logged if enabled. Any
+ combination of: admin, filesort, filesort_on_disk, 
  filesort_priority_queue, full_join, full_scan, 
  not_using_index, query_cache, query_cache_miss, tmp_table,
  tmp_table_on_disk, or ALL to set all combinations
@@ -681,7 +681,7 @@ The following specify which files/extra groups are read (specified before remain
  --max-write-lock-count=# 
  After this many write locks, allow some read locks to run
  in between
- --memlock           Lock mysqld in memory
+ --memlock           Lock mariadbd process in memory
  --metadata-locks-cache-size=# 
  Unused. Deprecated, will be removed in a future release.
  --metadata-locks-hash-instances=# 
@@ -699,7 +699,7 @@ The following specify which files/extra groups are read (specified before remain
  the temporary file would get bigger than this
  --myisam-mmap-size=# 
  Restricts the total memory used for memory mapping of
- MySQL tables
+ MyISAM tables
  --myisam-recover-options[=name] 
  Specifies how corrupted tables should be automatically
  repaired. Any combination of: DEFAULT, BACKUP, FORCE, 
@@ -753,9 +753,9 @@ The following specify which files/extra groups are read (specified before remain
  resources were counted per each user+host vs. per
  account)
  --open-files-limit=# 
- If this is not 0, then mysqld will use this value to
+ If this is not 0, then mariadbd will use this value to
  reserve file descriptors to use with setrlimit(). If this
- value is 0 or autoset then mysqld will reserve
+ value is 0 or autoset then mariadbd will reserve
  max_connections*5 or max_connections + table_cache*2
  (whichever is larger) number of file descriptors
  (Automatically configured unless set explicitly)
@@ -1030,7 +1030,7 @@ The following specify which files/extra groups are read (specified before remain
  --performance-schema-users-size=# 
  Maximum number of instrumented users. Use 0 to disable,
  -1 for automated sizing
- --pid-file=name     Pid file used by safe_mysqld
+ --pid-file=name     Pid file used by mariadbd-safe
  --plugin-dir=name   Directory for plugins
  --plugin-load=name  Semicolon-separated list of plugins to load, where each
  plugin is specified as ether a plugin_name=library_file
@@ -1067,9 +1067,9 @@ The following specify which files/extra groups are read (specified before remain
  syntax is a comma separated list of IPv4 and IPv6
  networks. If the network doesn't contain mask, it is
  considered to be a single host. "*" represents all
- networks and must the only directive on the line. String
- "localhost" represents non-TCP local connections (Unix
- domain socket, Windows named pipe or shared memory)
+ networks and must be the only directive on the line.
+ String "localhost" represents non-TCP local connections
+ (Unix domain socket, Windows named pipe or shared memory)
  --query-alloc-block-size=# 
  Allocation block size for query parsing and execution
  --query-cache-limit=# 
@@ -1243,7 +1243,7 @@ The following specify which files/extra groups are read (specified before remain
  Enable semi-synchronous replication slave (disabled by
  default)
  --rpl-semi-sync-slave-kill-conn-timeout[=#] 
- Timeout for the mysql connection used to kill the slave
+ Timeout for the MariaDB connection used to kill the slave
  io_thread's connection on master. This timeout comes into
  play when stop slave is executed
  --rpl-semi-sync-slave-trace-level=# 
@@ -1586,7 +1586,7 @@ The following specify which files/extra groups are read (specified before remain
  Specifies how to use system statistics tables. One of: 
  NEVER, COMPLEMENTARY, PREFERABLY, 
  COMPLEMENTARY_FOR_QUERIES, PREFERABLY_FOR_QUERIES
- -u, --user=name     Run mysqld daemon as user
+ -u, --user=name     User to run mariadbd process as
  --userstat          Enables statistics gathering for USER_STATISTICS,
  CLIENT_STATISTICS, INDEX_STATISTICS and TABLE_STATISTICS
  tables in the INFORMATION_SCHEMA
@@ -2008,4 +2008,4 @@ verbose TRUE
 wait-timeout 28800
 
 To see what variables a running server is using, type
-'SELECT * FROM INFORMATION_SCHEMA.GLOBAL_VARIABLES' instead of 'mysqld --verbose --help' or 'mariadbd --verbose --help'.
+'SELECT * FROM INFORMATION_SCHEMA.GLOBAL_VARIABLES' instead of 'mariadbd --verbose --help'.
