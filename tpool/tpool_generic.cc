@@ -441,7 +441,7 @@ public:
       disarm();
     }
   };
-  timer_generic m_maintenance_timer;
+  timer_generic* m_maintenance_timer=nullptr;
   virtual timer* create_timer(callback_func func, void *data) override
   {
     return new timer_generic(func, data, this);
@@ -809,12 +809,15 @@ thread_pool_generic::thread_pool_generic(int min_threads, int max_threads) :
   m_min_threads(min_threads),
   m_max_threads(max_threads),
   m_last_thread_count(),
-  m_last_activity(),
-  m_maintenance_timer(thread_pool_generic::maintenance_func, this, nullptr)
+  m_last_activity()
 {
   set_concurrency();
   // start the timer
-  m_maintenance_timer.set_time(0, (int)m_timer_interval.count());
+  if (m_min_threads != m_max_threads)
+  {
+    m_maintenance_timer= new timer_generic(thread_pool_generic::maintenance_func, this, nullptr);
+    m_maintenance_timer->set_time(0, (int)m_timer_interval.count());
+  }
 }
 
 
@@ -866,7 +869,6 @@ void thread_pool_generic::submit_task(task* task)
   m_task_queue.push(task);
   maybe_wake_or_create_thread();
 }
-
 
 /* Notify thread pool that current thread is going to wait */
 void thread_pool_generic::wait_begin()
@@ -920,8 +922,8 @@ void thread_pool_generic::switch_timer(timer_state_t state)
   m_timer_state= state;
   long long period= (state == timer_state_t::OFF) ?
      m_timer_interval.count()*10: m_timer_interval.count();
-
-  m_maintenance_timer.set_period((int)period);
+  if (m_maintenance_timer)
+   m_maintenance_timer->set_period((int)period);
 }
 
 
@@ -939,7 +941,8 @@ thread_pool_generic::~thread_pool_generic()
   m_aio.reset();
 
   /* Also stop the maintanence task early. */
-  m_maintenance_timer.disarm();
+  if (m_maintenance_timer)
+    m_maintenance_timer->disarm();
 
   std::unique_lock<std::mutex> lk(m_mtx);
   m_in_shutdown= true;
@@ -953,8 +956,8 @@ thread_pool_generic::~thread_pool_generic()
   {
     m_cv_no_threads.wait(lk);
   }
-
   lk.unlock();
+  delete m_maintenance_timer;
 }
 
 thread_pool *create_thread_pool_generic(int min_threads, int max_threads)
