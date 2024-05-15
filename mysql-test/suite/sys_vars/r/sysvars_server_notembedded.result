@@ -445,7 +445,7 @@ COMMAND_LINE_ARGUMENT	REQUIRED
 VARIABLE_NAME	BINLOG_FORMAT
 VARIABLE_SCOPE	SESSION
 VARIABLE_TYPE	ENUM
-VARIABLE_COMMENT	What form of binary logging the master will use: either ROW for row-based binary logging, STATEMENT for statement-based binary logging, or MIXED. MIXED is statement-based binary logging except for those statements where only row-based is correct: those which involve user-defined functions (i.e. UDFs) or the UUID() function; for those, row-based binary logging is automatically used
+VARIABLE_COMMENT	The binary logging format the master will use: ROW for row-based binary logging (safer), STATEMENT for statement-based binary logging (smaller binary logs), MIXED for statement-based binary logging when it's safe with fall back to row-based otherwise
 NUMERIC_MIN_VALUE	NULL
 NUMERIC_MAX_VALUE	NULL
 NUMERIC_BLOCK_SIZE	NULL
@@ -535,7 +535,7 @@ COMMAND_LINE_ARGUMENT	REQUIRED
 VARIABLE_NAME	BINLOG_ROW_METADATA
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	ENUM
-VARIABLE_COMMENT	Controls whether metadata is logged using FULL , MINIMAL format and NO_LOG.FULL causes all metadata to be logged; MINIMAL means that only metadata actually required by slave is logged; NO_LOG NO metadata will be logged.Default: NO_LOG
+VARIABLE_COMMENT	Controls whether metadata is logged using FULL , MINIMAL format and NO_LOG. FULL causes all metadata to be logged; MINIMAL means that only metadata actually required by slave is logged; NO_LOG NO metadata will be logged
 NUMERIC_MIN_VALUE	NULL
 NUMERIC_MAX_VALUE	NULL
 NUMERIC_BLOCK_SIZE	NULL
@@ -1175,7 +1175,7 @@ COMMAND_LINE_ARGUMENT	REQUIRED
 VARIABLE_NAME	GENERAL_LOG
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	BOOLEAN
-VARIABLE_COMMENT	Log connections and queries to a table or log file. Defaults logging to a file 'hostname'.log or a table mysql.general_logif --log-output=TABLE is used
+VARIABLE_COMMENT	Log connections and queries to a table or log file. Defaults logging to a file 'hostname'.log or a table mysql.general_log if --log-output=TABLE is used
 NUMERIC_MIN_VALUE	NULL
 NUMERIC_MAX_VALUE	NULL
 NUMERIC_BLOCK_SIZE	NULL
@@ -1205,7 +1205,7 @@ COMMAND_LINE_ARGUMENT	REQUIRED
 VARIABLE_NAME	GTID_BINLOG_POS
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	VARCHAR
-VARIABLE_COMMENT	Last GTID logged to the binary log, per replicationdomain
+VARIABLE_COMMENT	Last GTID logged to the binary log, per replication domain
 NUMERIC_MIN_VALUE	NULL
 NUMERIC_MAX_VALUE	NULL
 NUMERIC_BLOCK_SIZE	NULL
@@ -1265,7 +1265,7 @@ COMMAND_LINE_ARGUMENT	OPTIONAL
 VARIABLE_NAME	GTID_POS_AUTO_ENGINES
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	VARCHAR
-VARIABLE_COMMENT	List of engines for which to automatically create a mysql.gtid_slave_pos_ENGINE table, if a transaction using that engine is replicated. This can be used to avoid introducing cross-engine transactions, if engines are used different from that used by table mysql.gtid_slave_pos
+VARIABLE_COMMENT	List of engines for which a dedicated mysql.gtid_slave_pos_ENGINE table is created automatically, if a transaction using that engine is replicated. This helps to avoid cross-engine transactions, as would be the case when user tables and mysql.gtid_slave_pos were created in different transactional engines
 NUMERIC_MIN_VALUE	NULL
 NUMERIC_MAX_VALUE	NULL
 NUMERIC_BLOCK_SIZE	NULL
@@ -1615,7 +1615,7 @@ COMMAND_LINE_ARGUMENT	OPTIONAL
 VARIABLE_NAME	KEY_BUFFER_SIZE
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	BIGINT UNSIGNED
-VARIABLE_COMMENT	The size of the buffer used for index blocks for MyISAM tables. Increase this to get better index handling (for all reads and multiple writes) to as much as you can afford
+VARIABLE_COMMENT	The size of the buffer used for index blocks for MyISAM tables. Increase this to get faster index handling
 NUMERIC_MIN_VALUE	0
 NUMERIC_MAX_VALUE	18446744073709551615
 NUMERIC_BLOCK_SIZE	4096
@@ -1825,7 +1825,7 @@ COMMAND_LINE_ARGUMENT	OPTIONAL
 VARIABLE_NAME	LOG_BIN_COMPRESS_MIN_LEN
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	INT UNSIGNED
-VARIABLE_COMMENT	Minimum length of sql statement(in statement mode) or record(in row mode)that can be compressed
+VARIABLE_COMMENT	Minimum length of sql statement (in statement mode) or record (in row mode) that can be compressed
 NUMERIC_MIN_VALUE	10
 NUMERIC_MAX_VALUE	1024
 NUMERIC_BLOCK_SIZE	1
@@ -2015,7 +2015,7 @@ COMMAND_LINE_ARGUMENT	REQUIRED
 VARIABLE_NAME	LOG_WARNINGS
 VARIABLE_SCOPE	SESSION
 VARIABLE_TYPE	BIGINT UNSIGNED
-VARIABLE_COMMENT	Log some non critical warnings to the error log.Value can be between 0 and 11. Higher values mean more verbosity
+VARIABLE_COMMENT	Log some non-critical warnings to the error log. Value can be between 0 and 11. Higher values mean more verbosity
 NUMERIC_MIN_VALUE	0
 NUMERIC_MAX_VALUE	4294967295
 NUMERIC_BLOCK_SIZE	1
@@ -2605,7 +2605,7 @@ COMMAND_LINE_ARGUMENT	REQUIRED
 VARIABLE_NAME	OPTIMIZER_INDEX_BLOCK_COPY_COST
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	DOUBLE
-VARIABLE_COMMENT	Cost of copying a key block from the cache to intern storage as part of an index scan
+VARIABLE_COMMENT	Cost of copying a key block from the cache to internal storage as part of an index scan
 NUMERIC_MIN_VALUE	0
 NUMERIC_MAX_VALUE	1000
 NUMERIC_BLOCK_SIZE	NULL
@@ -2795,7 +2795,7 @@ COMMAND_LINE_ARGUMENT	REQUIRED
 VARIABLE_NAME	OPTIMIZER_USE_CONDITION_SELECTIVITY
 VARIABLE_SCOPE	SESSION
 VARIABLE_TYPE	BIGINT UNSIGNED
-VARIABLE_COMMENT	Controls selectivity of which conditions the optimizer takes into account to calculate cardinality of a partial join when it searches for the best execution plan Meaning: 1 - use selectivity of index backed range conditions to calculate the cardinality of a partial join if the last joined table is accessed by full table scan or an index scan, 2 - use selectivity of index backed range conditions to calculate the cardinality of a partial join in any case, 3 - additionally always use selectivity of range conditions that are not backed by any index to calculate the cardinality of a partial join, 4 - use histograms to calculate selectivity of range conditions that are not backed by any index to calculate the cardinality of a partial join.5 - additionally use selectivity of certain non-range predicates calculated on record samples
+VARIABLE_COMMENT	Controls selectivity of which conditions the optimizer takes into account to calculate cardinality of a partial join when it searches for the best execution plan Meaning: 1 - use selectivity of index backed range conditions to calculate the cardinality of a partial join if the last joined table is accessed by full table scan or an index scan, 2 - use selectivity of index backed range conditions to calculate the cardinality of a partial join in any case, 3 - additionally always use selectivity of range conditions that are not backed by any index to calculate the cardinality of a partial join, 4 - use histograms to calculate selectivity of range conditions that are not backed by any index to calculate the cardinality of a partial join. 5 - additionally use selectivity of certain non-range predicates calculated on record samples
 NUMERIC_MIN_VALUE	1
 NUMERIC_MAX_VALUE	5
 NUMERIC_BLOCK_SIZE	1
@@ -3655,7 +3655,7 @@ COMMAND_LINE_ARGUMENT	NULL
 VARIABLE_NAME	REPLICATE_REWRITE_DB
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	VARCHAR
-VARIABLE_COMMENT	Tells the slave to replicate binlog events into a different database than their original target on the master.Example: replicate-rewrite-db=master_db_name->slave_db_name
+VARIABLE_COMMENT	Tells the slave to replicate binlog events into a different database than their original target on the master. Example: replicate-rewrite-db=master_db_name->slave_db_name
 NUMERIC_MIN_VALUE	NULL
 NUMERIC_MAX_VALUE	NULL
 NUMERIC_BLOCK_SIZE	NULL
@@ -3905,7 +3905,7 @@ COMMAND_LINE_ARGUMENT	REQUIRED
 VARIABLE_NAME	SESSION_TRACK_TRANSACTION_INFO
 VARIABLE_SCOPE	SESSION
 VARIABLE_TYPE	ENUM
-VARIABLE_COMMENT	Track changes to the transaction attributes. OFF to disable; STATE to track just transaction state (Is there an active transaction? Does it have any data? etc.); CHARACTERISTICS to track transaction state and report all statements needed to start a transaction with the same characteristics (isolation level, read only/read write,snapshot - but not any work done / data modified within the transaction)
+VARIABLE_COMMENT	Track changes to the transaction attributes. OFF to disable; STATE to track just transaction state (Is there an active transaction? Does it have any data? etc.); CHARACTERISTICS to track transaction state and report all statements needed to start a transaction with the same characteristics (isolation level, read only/read write, snapshot - but not any work done / data modified within the transaction)
 NUMERIC_MIN_VALUE	NULL
 NUMERIC_MAX_VALUE	NULL
 NUMERIC_BLOCK_SIZE	NULL
@@ -4595,7 +4595,7 @@ COMMAND_LINE_ARGUMENT	REQUIRED
 VARIABLE_NAME	TCP_KEEPALIVE_INTERVAL
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	INT
-VARIABLE_COMMENT	The interval, in seconds, between when successive keep-alive packets are sent if no acknowledgement is received.If set to 0, system dependent default is used
+VARIABLE_COMMENT	The interval, in seconds, between when successive keep-alive packets are sent if no acknowledgement is received. If set to 0, system dependent default is used
 NUMERIC_MIN_VALUE	0
 NUMERIC_MAX_VALUE	2147483
 NUMERIC_BLOCK_SIZE	1
@@ -4605,7 +4605,7 @@ COMMAND_LINE_ARGUMENT	REQUIRED
 VARIABLE_NAME	TCP_KEEPALIVE_PROBES
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	INT
-VARIABLE_COMMENT	The number of unacknowledged probes to send before considering the connection dead and notifying the application layer.If set to 0, system dependent default is used
+VARIABLE_COMMENT	The number of unacknowledged probes to send before considering the connection dead and notifying the application layer. If set to 0, system dependent default is used
 NUMERIC_MIN_VALUE	0
 NUMERIC_MAX_VALUE	2147483
 NUMERIC_BLOCK_SIZE	1
@@ -4615,7 +4615,7 @@ COMMAND_LINE_ARGUMENT	REQUIRED
 VARIABLE_NAME	TCP_KEEPALIVE_TIME
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	INT
-VARIABLE_COMMENT	Timeout, in seconds, with no activity until the first TCP keep-alive packet is sent.If set to 0, system dependent default is used
+VARIABLE_COMMENT	Timeout, in seconds, with no activity until the first TCP keep-alive packet is sent. If set to 0, system dependent default is used
 NUMERIC_MIN_VALUE	0
 NUMERIC_MAX_VALUE	2147483
 NUMERIC_BLOCK_SIZE	1
@@ -4675,7 +4675,7 @@ COMMAND_LINE_ARGUMENT	OPTIONAL
 VARIABLE_NAME	THREAD_POOL_IDLE_TIMEOUT
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	INT UNSIGNED
-VARIABLE_COMMENT	Timeout in seconds for an idle thread in the thread pool.Worker thread will be shut down after timeout
+VARIABLE_COMMENT	Timeout in seconds for an idle thread in the thread pool. Worker thread will be shut down after timeout
 NUMERIC_MIN_VALUE	1
 NUMERIC_MAX_VALUE	4294967295
 NUMERIC_BLOCK_SIZE	1
@@ -4705,7 +4705,7 @@ COMMAND_LINE_ARGUMENT	REQUIRED
 VARIABLE_NAME	THREAD_POOL_PRIORITY
 VARIABLE_SCOPE	SESSION
 VARIABLE_TYPE	ENUM
-VARIABLE_COMMENT	Threadpool priority. High priority connections usually start executing earlier than low priority.If priority set to 'auto', the the actual priority(low or high) is determined based on whether or not connection is inside transaction
+VARIABLE_COMMENT	Threadpool priority. High priority connections usually start executing earlier than low priority. If priority set to 'auto', the the actual priority(low or high) is determined based on whether or not connection is inside transaction
 NUMERIC_MIN_VALUE	NULL
 NUMERIC_MAX_VALUE	NULL
 NUMERIC_BLOCK_SIZE	NULL
@@ -4735,7 +4735,7 @@ COMMAND_LINE_ARGUMENT	REQUIRED
 VARIABLE_NAME	THREAD_POOL_STALL_LIMIT
 VARIABLE_SCOPE	GLOBAL
 VARIABLE_TYPE	INT UNSIGNED
-VARIABLE_COMMENT	Maximum query execution time in milliseconds,before an executing non-yielding thread is considered stalled.If a worker thread is stalled, additional worker thread may be created to handle remaining clients
+VARIABLE_COMMENT	Maximum query execution time in milliseconds, before an executing non-yielding thread is considered stalled. If a worker thread is stalled, additional worker thread may be created to handle remaining clients
 NUMERIC_MIN_VALUE	1
 NUMERIC_MAX_VALUE	4294967295
 NUMERIC_BLOCK_SIZE	1
@@ -4865,7 +4865,7 @@ COMMAND_LINE_ARGUMENT	NULL
 VARIABLE_NAME	TX_ISOLATION
 VARIABLE_SCOPE	SESSION
 VARIABLE_TYPE	ENUM
-VARIABLE_COMMENT	Default transaction isolation level.This variable is deprecated and will be removed in a future release
+VARIABLE_COMMENT	Default transaction isolation level. This variable is deprecated and will be removed in a future release
 NUMERIC_MIN_VALUE	NULL
 NUMERIC_MAX_VALUE	NULL
 NUMERIC_BLOCK_SIZE	NULL
@@ -4875,7 +4875,7 @@ COMMAND_LINE_ARGUMENT	NULL
 VARIABLE_NAME	TX_READ_ONLY
 VARIABLE_SCOPE	SESSION
 VARIABLE_TYPE	BOOLEAN
-VARIABLE_COMMENT	Default transaction access mode. If set to OFF, the default, access is read/write. If set to ON, access is read-only. The SET TRANSACTION statement can also change the value of this variable. See SET TRANSACTION and START TRANSACTION.This variable is deprecated and will be removed in a future release
+VARIABLE_COMMENT	Default transaction access mode. If set to OFF, the default, access is read/write. If set to ON, access is read-only. The SET TRANSACTION statement can also change the value of this variable. See SET TRANSACTION and START TRANSACTION. This variable is deprecated and will be removed in a future release
 NUMERIC_MIN_VALUE	NULL
 NUMERIC_MAX_VALUE	NULL
 NUMERIC_BLOCK_SIZE	NULL

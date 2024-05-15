@@ -693,13 +693,11 @@ static Sys_var_on_access<Sys_var_enum,
                          PRIV_SET_SYSTEM_VAR_BINLOG_FORMAT,
                          PRIV_SET_SYSTEM_VAR_BINLOG_FORMAT>
 Sys_binlog_format(
-       "binlog_format", "What form of binary logging the master will "
-       "use: either ROW for row-based binary logging, STATEMENT "
-       "for statement-based binary logging, or MIXED. MIXED is statement-"
-       "based binary logging except for those statements where only row-"
-       "based is correct: those which involve user-defined functions (i.e. "
-       "UDFs) or the UUID() function; for those, row-based binary logging is "
-       "automatically used",
+       "binlog_format", "The binary logging format the master will "
+       "use: ROW for row-based binary logging (safer), STATEMENT "
+       "for statement-based binary logging (smaller binary logs), MIXED "
+       "for statement-based binary logging when it's safe with fall back "
+       "to row-based otherwise",
        SESSION_VAR(binlog_format), CMD_LINE(REQUIRED_ARG, OPT_BINLOG_FORMAT),
        binlog_format_names, DEFAULT(BINLOG_FORMAT_MIXED),
        NO_MUTEX_GUARD, NOT_IN_BINLOG, ON_CHECK(binlog_format_check),
@@ -1456,9 +1454,8 @@ static Sys_var_ulonglong Sys_join_buffer_size(
 
 static Sys_var_keycache Sys_key_buffer_size(
        "key_buffer_size", "The size of the buffer used for "
-       "index blocks for MyISAM tables. Increase this to get better index "
-       "handling (for all reads and multiple writes) to as much as you can "
-       "afford",
+       "index blocks for MyISAM tables. Increase this to get faster index "
+       "handling",
        KEYCACHE_VAR(param_buff_size),
        CMD_LINE(REQUIRED_ARG, OPT_KEY_BUFFER_SIZE),
        VALID_RANGE(0, SIZE_T_MAX), DEFAULT(KEY_CACHE_SIZE),
@@ -1563,7 +1560,7 @@ static Sys_var_on_access_global<Sys_var_uint,
                             PRIV_SET_SYSTEM_GLOBAL_VAR_LOG_BIN_COMPRESS_MIN_LEN>
 Sys_log_bin_compress_min_len(
   "log_bin_compress_min_len",
-  "Minimum length of sql statement(in statement mode) or record(in row mode)"
+  "Minimum length of sql statement (in statement mode) or record (in row mode) "
   "that can be compressed",
   GLOBAL_VAR(opt_bin_log_compress_min_len),
   CMD_LINE(OPT_ARG), VALID_RANGE(10, 1024), DEFAULT(256), BLOCK_SIZE(1));
@@ -1618,7 +1615,7 @@ static Sys_var_bit Sys_log_slow_slave_statements(
 
 static Sys_var_ulong Sys_log_warnings(
        "log_warnings",
-       "Log some non critical warnings to the error log."
+       "Log some non-critical warnings to the error log. "
        "Value can be between 0 and 11. Higher values mean more verbosity",
        SESSION_VAR(log_warnings),
        CMD_LINE(OPT_ARG, 'W'),
@@ -2004,7 +2001,7 @@ Sys_gtid_seq_no(
 #ifdef HAVE_REPLICATION
 static unsigned char opt_gtid_binlog_pos_dummy;
 static Sys_var_gtid_binlog_pos Sys_gtid_binlog_pos(
-       "gtid_binlog_pos", "Last GTID logged to the binary log, per replication"
+       "gtid_binlog_pos", "Last GTID logged to the binary log, per replication "
        "domain",
        READ_ONLY GLOBAL_VAR(opt_gtid_binlog_pos_dummy), NO_CMD_LINE);
 
@@ -2894,7 +2891,7 @@ static Sys_var_ulong Sys_optimizer_use_condition_selectivity(
        "not backed by any index to calculate the cardinality of a partial join, "
        "4 - use histograms to calculate selectivity of range conditions that "
        "are not backed by any index to calculate the cardinality of "
-       "a partial join."
+       "a partial join. "
        "5 - additionally use selectivity of certain non-range predicates "
        "calculated on record samples",
        SESSION_VAR(optimizer_use_condition_selectivity), CMD_LINE(REQUIRED_ARG),
@@ -4188,8 +4185,10 @@ static Sys_var_on_access_global<Sys_var_enum,
                                 PRIV_SET_SYSTEM_GLOBAL_VAR_THREAD_POOL>
 Sys_thread_pool_priority(
   "thread_pool_priority",
-  "Threadpool priority. High priority connections usually start executing earlier than low priority."
-  "If priority set to 'auto', the the actual priority(low or high) is determined based on whether or not connection is inside transaction",
+  "Threadpool priority. High priority connections usually start executing "
+  "earlier than low priority. If priority set to 'auto', the the actual "
+  "priority(low or high) is determined based on whether or not connection "
+  "is inside transaction",
   SESSION_VAR(threadpool_priority), CMD_LINE(REQUIRED_ARG),
   threadpool_priority_names, DEFAULT(TP_PRIORITY_AUTO));
 
@@ -4197,7 +4196,7 @@ static Sys_var_on_access_global<Sys_var_uint,
                                 PRIV_SET_SYSTEM_GLOBAL_VAR_THREAD_POOL>
 Sys_threadpool_idle_thread_timeout(
   "thread_pool_idle_timeout",
-  "Timeout in seconds for an idle thread in the thread pool."
+  "Timeout in seconds for an idle thread in the thread pool. "
   "Worker thread will be shut down after timeout",
   GLOBAL_VAR(threadpool_idle_timeout), CMD_LINE(REQUIRED_ARG),
   VALID_RANGE(1, UINT_MAX), DEFAULT(60), BLOCK_SIZE(1)
@@ -4226,8 +4225,8 @@ static Sys_var_on_access_global<Sys_var_uint,
                                 PRIV_SET_SYSTEM_GLOBAL_VAR_THREAD_POOL>
 Sys_threadpool_stall_limit(
  "thread_pool_stall_limit",
- "Maximum query execution time in milliseconds,"
- "before an executing non-yielding thread is considered stalled."
+ "Maximum query execution time in milliseconds, "
+ "before an executing non-yielding thread is considered stalled. "
  "If a worker thread is stalled, additional worker thread "
  "may be created to handle remaining clients",
   GLOBAL_VAR(threadpool_stall_limit), CMD_LINE(REQUIRED_ARG),
@@ -4293,7 +4292,7 @@ static bool check_tx_isolation(sys_var *self, THD *thd, set_var *var)
 
 // NO_CMD_LINE - different name of the option
 static Sys_var_tx_isolation Sys_tx_isolation(
-       "tx_isolation", "Default transaction isolation level."
+       "tx_isolation", "Default transaction isolation level. "
        "This variable is deprecated and will be removed in a future release",
        SESSION_VAR(tx_isolation), NO_CMD_LINE,
        tx_isolation_names, DEFAULT(ISO_REPEATABLE_READ),
@@ -4353,7 +4352,7 @@ static Sys_var_tx_read_only Sys_tx_read_only(
        "tx_read_only", "Default transaction access mode. If set to OFF, "
        "the default, access is read/write. If set to ON, access is read-only. "
        "The SET TRANSACTION statement can also change the value of this variable. "
-       "See SET TRANSACTION and START TRANSACTION."
+       "See SET TRANSACTION and START TRANSACTION. "
        "This variable is deprecated and will be removed in a future release",
        SESSION_VAR(tx_read_only), NO_CMD_LINE, DEFAULT(0),
        NO_MUTEX_GUARD, NOT_IN_BINLOG, ON_CHECK(check_tx_read_only),
@@ -4531,11 +4530,11 @@ static Sys_var_on_access_global<Sys_var_pluginlist,
                                PRIV_SET_SYSTEM_GLOBAL_VAR_GTID_POS_AUTO_ENGINES>
 Sys_gtid_pos_auto_engines(
        "gtid_pos_auto_engines",
-       "List of engines for which to automatically create a "
-       "mysql.gtid_slave_pos_ENGINE table, if a transaction using that engine "
-       "is replicated. This can be used to avoid introducing cross-engine "
-       "transactions, if engines are used different from that used by table "
-       "mysql.gtid_slave_pos",
+       "List of engines for which a dedicated mysql.gtid_slave_pos_ENGINE "
+       "table is created automatically, if a transaction using that engine "
+       "is replicated. This helps to avoid cross-engine "
+       "transactions, as would be the case when user tables and "
+       "mysql.gtid_slave_pos were created in different transactional engines",
        GLOBAL_VAR(opt_gtid_pos_auto_plugins), NO_CMD_LINE,
        DEFAULT(&gtid_pos_auto_engines),
        NO_MUTEX_GUARD, NOT_IN_BINLOG, ON_CHECK(check_gtid_pos_auto_engines));
@@ -4619,9 +4618,10 @@ static bool fix_autocommit(sys_var *self, THD *thd, enum_var_type type)
 
 static Sys_var_bit Sys_autocommit(
        "autocommit", "If set to 1, the default, all queries are committed "
-       "immediately. If set to 0, they are only committed upon a COMMIT statement"
-       ", or rolled back with a ROLLBACK statement. If autocommit is set to 0, "
-       "and then changed to 1, all open transactions are immediately committed",
+       "immediately. If set to 0, they are only committed upon a COMMIT "
+       "statement, or rolled back with a ROLLBACK statement. If autocommit is "
+       "set to 0, and then changed to 1, all open transactions are immediately "
+       "committed",
        NO_SET_STMT SESSION_VAR(option_bits), NO_CMD_LINE,
        OPTION_AUTOCOMMIT, DEFAULT(TRUE),
        NO_MUTEX_GUARD, NOT_IN_BINLOG, ON_CHECK(0), ON_UPDATE(fix_autocommit));
@@ -5361,7 +5361,7 @@ static bool fix_log_state(sys_var *self, THD *thd, enum_var_type type);
 static Sys_var_mybool Sys_general_log(
        "general_log", "Log connections and queries to a table or log file. "
        "Defaults logging to a file 'hostname'.log or a table mysql.general_log"
-       "if --log-output=TABLE is used",
+       " if --log-output=TABLE is used",
        GLOBAL_VAR(opt_log), CMD_LINE(OPT_ARG),
        DEFAULT(FALSE), NO_MUTEX_GUARD, NOT_IN_BINLOG, ON_CHECK(0),
        ON_UPDATE(fix_log_state));
@@ -5683,7 +5683,7 @@ static Sys_var_binlog_filter Sys_binlog_do_db(
 static Sys_var_rpl_filter Sys_replicate_rewrite_db(
        "replicate_rewrite_db", OPT_REPLICATE_REWRITE_DB,
        "Tells the slave to replicate binlog events "
-       "into a different database than their original target on the master."
+       "into a different database than their original target on the master. "
        "Example: replicate-rewrite-db=master_db_name->slave_db_name",
        PRIV_SET_SYSTEM_GLOBAL_VAR_REPLICATE_REWRITE_DB);
 
@@ -6343,7 +6343,8 @@ static Sys_var_mybool Sys_wsrep_log_conflicts(
        GLOBAL_VAR(wsrep_log_conflicts), CMD_LINE(OPT_ARG), DEFAULT(FALSE));
 
 static Sys_var_ulong Sys_wsrep_mysql_replication_bundle(
-      "wsrep_mysql_replication_bundle", "mysql replication group commit",
+      "wsrep_mysql_replication_bundle",
+      "Number of replication events that are grouped together",
        GLOBAL_VAR(wsrep_mysql_replication_bundle), CMD_LINE(REQUIRED_ARG),
        VALID_RANGE(0, 1000), DEFAULT(0), BLOCK_SIZE(1));
 
@@ -6462,23 +6463,25 @@ vio_keepalive_opts opt_vio_keepalive;
 
 static Sys_var_int Sys_keepalive_time(
        "tcp_keepalive_time",
-       "Timeout, in seconds, with no activity until the first TCP keep-alive packet is sent."
-       "If set to 0, system dependent default is used",
+       "Timeout, in seconds, with no activity until the first TCP keep-alive "
+       "packet is sent. If set to 0, system dependent default is used",
        AUTO_SET GLOBAL_VAR(opt_vio_keepalive.idle),
        CMD_LINE(REQUIRED_ARG), VALID_RANGE(0, INT_MAX32/1000), DEFAULT(0),
        BLOCK_SIZE(1));
 
 static Sys_var_int Sys_keepalive_interval(
        "tcp_keepalive_interval",
-       "The interval, in seconds, between when successive keep-alive packets are sent if no acknowledgement is received."
-       "If set to 0, system dependent default is used",
+       "The interval, in seconds, between when successive keep-alive packets "
+       "are sent if no acknowledgement is received. If set to 0, system "
+       "dependent default is used",
        AUTO_SET GLOBAL_VAR(opt_vio_keepalive.interval),
        CMD_LINE(REQUIRED_ARG), VALID_RANGE(0, INT_MAX32/1000), DEFAULT(0),
        BLOCK_SIZE(1));
 
 static Sys_var_int Sys_keepalive_probes(
        "tcp_keepalive_probes",
-       "The number of unacknowledged probes to send before considering the connection dead and notifying the application layer."
+       "The number of unacknowledged probes to send before considering the "
+       "connection dead and notifying the application layer. "
        "If set to 0, system dependent default is used",
        AUTO_SET GLOBAL_VAR(opt_vio_keepalive.probes),
        CMD_LINE(REQUIRED_ARG), VALID_RANGE(0, INT_MAX32/1000), DEFAULT(0),
@@ -6887,10 +6890,10 @@ static Sys_var_on_access_global<Sys_var_enum,
                                 PRIV_SET_SYSTEM_GLOBAL_VAR_BINLOG_ROW_METADATA>
 Sys_binlog_row_metadata(
        "binlog_row_metadata",
-       "Controls whether metadata is logged using FULL , MINIMAL format and NO_LOG."
-       "FULL causes all metadata to be logged; MINIMAL means that only "
-       "metadata actually required by slave is logged; NO_LOG NO metadata will be logged."
-       "Default: NO_LOG",
+       "Controls whether metadata is logged using FULL , MINIMAL format and "
+       "NO_LOG. FULL causes all metadata to be logged; MINIMAL means that only "
+       "metadata actually required by slave is logged; NO_LOG NO metadata will "
+       "be logged",
        GLOBAL_VAR(binlog_row_metadata), CMD_LINE(REQUIRED_ARG),
        binlog_row_metadata_names, DEFAULT(Table_map_log_event::BINLOG_ROW_METADATA_NO_LOG),
        NO_MUTEX_GUARD, NOT_IN_BINLOG, ON_CHECK(NULL),
@@ -7122,7 +7125,7 @@ static Sys_var_enum Sys_session_track_transaction_info(
        "STATE to track just transaction state (Is there an active transaction? "
        "Does it have any data? etc.); CHARACTERISTICS to track transaction "
        "state and report all statements needed to start a transaction with "
-       "the same characteristics (isolation level, read only/read write,"
+       "the same characteristics (isolation level, read only/read write, "
        "snapshot - but not any work done / data modified within the "
        "transaction)",
        SESSION_VAR(session_track_transaction_info),
@@ -7258,7 +7261,7 @@ static Sys_var_engine_optimizer_cost Sys_optimizer_key_copy_cost(
 
 static Sys_var_engine_optimizer_cost Sys_optimizer_index_block_copy_cost(
   "optimizer_index_block_copy_cost",
-  "Cost of copying a key block from the cache to intern storage as part of "
+  "Cost of copying a key block from the cache to internal storage as part of "
   "an index scan",
   COST_VAR(index_block_copy_cost),
   CMD_LINE(REQUIRED_ARG, OPT_COSTS_INDEX_BLOCK_COPY_COST),

@@ -90,14 +90,11 @@ The following specify which files/extra groups are read (specified before remain
  --binlog-file-cache-size=# 
  The size of file cache for the binary log
  --binlog-format=name 
- What form of binary logging the master will use: either
- ROW for row-based binary logging, STATEMENT for
- statement-based binary logging, or MIXED. MIXED is
- statement-based binary logging except for those
- statements where only row-based is correct: those which
- involve user-defined functions (i.e. UDFs) or the UUID()
- function; for those, row-based binary logging is
- automatically used
+ The binary logging format the master will use: ROW for
+ row-based binary logging (safer), STATEMENT for
+ statement-based binary logging (smaller binary logs),
+ MIXED for statement-based binary logging when it's safe
+ with fall back to row-based otherwise
  --binlog-gtid-index Enable the creation of a GTID index for every binlog
  file, and the use of such index for speeding up GTID
  lookup in the binlog
@@ -146,10 +143,9 @@ The following specify which files/extra groups are read (specified before remain
  are logged in the after image
  --binlog-row-metadata=name 
  Controls whether metadata is logged using FULL , MINIMAL
- format and NO_LOG.FULL causes all metadata to be logged;
+ format and NO_LOG. FULL causes all metadata to be logged;
  MINIMAL means that only metadata actually required by
- slave is logged; NO_LOG NO metadata will be
- logged.Default: NO_LOG
+ slave is logged; NO_LOG NO metadata will be logged
  --binlog-space-limit=# 
  Alias for max_binlog_total_size. Compatibility with
  Percona server
@@ -347,7 +343,7 @@ The following specify which files/extra groups are read (specified before remain
  --gdb               Set up signals usable for debugging. Deprecated, will be
  --general-log       Log connections and queries to a table or log file.
  Defaults logging to a file 'hostname'.log or a table
- mysql.general_logif --log-output=TABLE is used
+ mysql.general_log if --log-output=TABLE is used
  --general-log-file=name 
  Log connections and queries to given file
  --getopt-prefix-matching 
@@ -449,9 +445,7 @@ The following specify which files/extra groups are read (specified before remain
  is specified. Deprecated, will be removed in a future
  release.
  --key-buffer-size=# The size of the buffer used for index blocks for MyISAM
- tables. Increase this to get better index handling (for
- all reads and multiple writes) to as much as you can
- afford
+ tables. Increase this to get faster index handling
  --key-cache-age-threshold=# 
  This characterizes the number of hits a hot block has to
  be untouched until it is considered aged enough to be
@@ -499,8 +493,8 @@ The following specify which files/extra groups are read (specified before remain
  stop if the real hostname of the computer changes
  --log-bin-compress  Whether the binary log can be compressed
  --log-bin-compress-min-len[=#] 
- Minimum length of sql statement(in statement mode) or
- record(in row mode)that can be compressed
+ Minimum length of sql statement (in statement mode) or
+ record (in row mode) that can be compressed
  --log-bin-index=name 
  File that holds the names for last binary log files
  --log-bin-trust-function-creators 
@@ -589,8 +583,9 @@ The following specify which files/extra groups are read (specified before remain
  when binary log is disabled)
  --log-tc-size=#     Size of transaction coordinator log
  -W, --log-warnings[=#] 
- Log some non critical warnings to the error log.Value can
- be between 0 and 11. Higher values mean more verbosity
+ Log some non-critical warnings to the error log. Value
+ can be between 0 and 11. Higher values mean more
+ verbosity
  --long-query-time=# Alias for log_slow_query_time. Log all queries that have
  taken more than long_query_time seconds to execute to the
  slow query log file. The argument will be treated as a
@@ -775,7 +770,7 @@ The following specify which files/extra groups are read (specified before remain
  size or larger, then it will try aggressively prune away
  the search space
  --optimizer-index-block-copy-cost=# 
- Cost of copying a key block from the cache to intern
+ Cost of copying a key block from the cache to internal
  storage as part of an index scan
  --optimizer-key-compare-cost=# 
  Cost of checking a key against the end key condition
@@ -863,7 +858,7 @@ The following specify which files/extra groups are read (specified before remain
  any index to calculate the cardinality of a partial join,
  4 - use histograms to calculate selectivity of range
  conditions that are not backed by any index to calculate
- the cardinality of a partial join.5 - additionally use
+ the cardinality of a partial join. 5 - additionally use
  selectivity of certain non-range predicates calculated on
  record samples
  --optimizer-where-cost=# 
@@ -1282,9 +1277,9 @@ The following specify which files/extra groups are read (specified before remain
  an active transaction? Does it have any data? etc.);
  CHARACTERISTICS to track transaction state and report all
  statements needed to start a transaction with the same
- characteristics (isolation level, read only/read
- write,snapshot - but not any work done / data modified
- within the transaction)
+ characteristics (isolation level, read only/read write,
+ snapshot - but not any work done / data modified within
+ the transaction)
  --show-slave-auth-info 
  Show user and password in SHOW SLAVE HOSTS on this master
  --silent-startup    Don't print [Note] to the error log during startup
@@ -1493,16 +1488,16 @@ The following specify which files/extra groups are read (specified before remain
  --tcp-keepalive-interval=# 
  The interval, in seconds, between when successive
  keep-alive packets are sent if no acknowledgement is
- received.If set to 0, system dependent default is used
+ received. If set to 0, system dependent default is used
  (Automatically configured unless set explicitly)
  --tcp-keepalive-probes=# 
  The number of unacknowledged probes to send before
  considering the connection dead and notifying the
- application layer.If set to 0, system dependent default
+ application layer. If set to 0, system dependent default
  is used (Automatically configured unless set explicitly)
  --tcp-keepalive-time=# 
  Timeout, in seconds, with no activity until the first TCP
- keep-alive packet is sent.If set to 0, system dependent
+ keep-alive packet is sent. If set to 0, system dependent
  default is used (Automatically configured unless set
  explicitly)
  --tcp-nodelay       Set option TCP_NODELAY (disable Nagle's algorithm) on
@@ -1517,8 +1512,8 @@ The following specify which files/extra groups are read (specified before remain
  If set to 1, provides better statistics in
  information_schema threadpool tables
  --thread-pool-idle-timeout=# 
- Timeout in seconds for an idle thread in the thread
- pool.Worker thread will be shut down after timeout
+ Timeout in seconds for an idle thread in the thread pool.
+ Worker thread will be shut down after timeout
  --thread-pool-max-threads=# 
  Maximum allowed number of worker threads in the thread
  pool
@@ -1530,8 +1525,8 @@ The following specify which files/extra groups are read (specified before remain
  statement is moved to the high-priority queue
  --thread-pool-priority=name 
  Threadpool priority. High priority connections usually
- start executing earlier than low priority.If priority set
- to 'auto', the the actual priority(low or high) is
+ start executing earlier than low priority. If priority
+ set to 'auto', the the actual priority(low or high) is
  determined based on whether or not connection is inside
  transaction
  --thread-pool-size=# 
@@ -1540,8 +1535,8 @@ The following specify which files/extra groups are read (specified before remain
  executing threads (threads in a waiting state do not
  count as executing)
  --thread-pool-stall-limit=# 
- Maximum query execution time in milliseconds,before an
- executing non-yielding thread is considered stalled.If a
+ Maximum query execution time in milliseconds, before an
+ executing non-yielding thread is considered stalled. If a
  worker thread is stalled, additional worker thread may be
  created to handle remaining clients
  --thread-stack=#    The stack size for each thread

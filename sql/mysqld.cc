@@ -6737,8 +6737,8 @@ struct my_option my_long_options[]=
 #if defined(_WIN32) && !defined(EMBEDDED_LIBRARY)
   {"slow-start-timeout", 0,
    "Maximum number of milliseconds that the service control manager should wait "
-   "before trying to kill the windows service during startup"
-   "(Default: 15000)", &slow_start_timeout, &slow_start_timeout, 0,
+   "before trying to kill the windows service during startup",
+   &slow_start_timeout, &slow_start_timeout, 0,
    GET_ULONG, REQUIRED_ARG, 15000, 0, 0, 0, 0, 0},
 #endif
 #ifdef HAVE_OPENSSL
