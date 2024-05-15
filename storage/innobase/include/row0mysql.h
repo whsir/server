@@ -845,8 +845,8 @@ struct row_drop_table_check_legacy_data
   bool found;
   const char *table_name;
   bool drop_db;
-  row_drop_table_check_legacy_data(const char *_table_name, bool _drop_db) :
-    found(false), table_name(_table_name), drop_db(_drop_db) {}
+  bool drop_table;
+  row_drop_table_check_legacy_data(const char *_table_name, int sql_command);
 };
 
 dberr_t row_drop_table_check_legacy_fk(trx_t *trx,

@@ -1257,6 +1257,13 @@ static ibool innodb_drop_database_fk(void *node, void *report)
 
   return true;
 }
+
+row_drop_table_check_legacy_data::row_drop_table_check_legacy_data(
+    const char *_table_name, int sql_command) :
+    found(false), table_name(_table_name),
+    drop_db(enum_sql_command(sql_command) == SQLCOM_DROP_DB),
+    drop_table(enum_sql_command(sql_command) == SQLCOM_DROP_TABLE)
+{}
 #endif /* WITH_INNODB_FOREIGN_UPGRADE */
 
 /** After DROP DATABASE executed ha_innobase::delete_table() on all
@@ -12822,9 +12829,7 @@ static int check_legacy_fk(trx_t *trx, const TABLE *table,
                                bufptr, len))
     return HA_ERR_OUT_OF_MEM;
 
-  const bool drop_db=
-      (enum_sql_command(thd_sql_command(trx->mysql_thd)) == SQLCOM_DROP_DB);
-  row_drop_table_check_legacy_data data(table_name, drop_db);
+  row_drop_table_check_legacy_data data(table_name, thd_sql_command(trx->mysql_thd));
 
   if (lock_dict_mutex)
     dict_sys.lock(SRW_LOCK_CALL);
@@ -13833,8 +13838,7 @@ err_exit:
       ut_ad(err == DB_SUCCESS);
       if (trx->check_foreigns)
       {
-        const bool drop_db= sqlcom == SQLCOM_DROP_DB;
-        row_drop_table_check_legacy_data data(table->name.m_name, drop_db);
+        row_drop_table_check_legacy_data data(table->name.m_name, sqlcom);
         err= row_drop_table_check_legacy_fk(trx, data);
         if (err != DB_SUCCESS)
           goto err_exit;

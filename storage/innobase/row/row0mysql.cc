@@ -2495,10 +2495,17 @@ static ibool row_drop_table_check_legacy_step(
   memcpy(d.foreign_name, fld->data, fld->len);
   d.foreign_name[fld->len]= 0;
   ut_a(!que_node_get_next(exp));
+  ut_ad(!(d.drop_db && d.drop_table));
   if (d.drop_db &&
       dict_tables_have_same_db(d.foreign_name, d.table_name))
   {
     return 1; /* continue FETCH */
+  }
+  if (d.drop_table &&
+      !strcmp(d.foreign_name, d.table_name))
+  {
+    /* Self-refs don't block table drop */
+    return 1;
   }
   d.found= true;
   return 0; /* stop FETCH */
