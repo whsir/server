@@ -1,0 +1,4 @@
+--source include/have_innodb.inc
+call mtr.add_suppression("\\[Warning\\] InnoDB: innodb_open_files .* should be greater than total number of undo tablespace, system & temporary tablespace. So changing the value of innodb_open_files to .*");
+CREATE TABLE t1(f1 INT NOT NULL)ENGINE=InnoDB;
+DROP TABLE t1;

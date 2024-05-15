@@ -1,0 +1,2 @@
+--innodb_undo_tablespaces=8
+--innodb_open_files=10

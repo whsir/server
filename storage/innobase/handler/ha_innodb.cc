@@ -3860,6 +3860,17 @@ static int innodb_init_params()
 		}
 	}
 
+	if (srv_undo_tablespaces + 2 >= innobase_open_files) {
+		ib::warn() << "innodb_open_files "
+			   << innobase_open_files << " should be "
+			   << "greater than total number "
+			   << "of undo tablespace, system & temporary "
+			   << "tablespace. So changing the value of "
+			   << "innodb_open_files to "
+			   << srv_undo_tablespaces + 3;
+		innobase_open_files = srv_undo_tablespaces + 3;
+	}
+
 	srv_max_n_open_files = innobase_open_files;
 	srv_innodb_status = (ibool) innobase_create_status_file;
 
