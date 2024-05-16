@@ -13700,6 +13700,8 @@ bool TABLE_SHARE::fk_handle_create(THD *thd, FK_create_vector &shares, FK_list *
   for (FK_ddl_backup &ref: shares)
   {
     TABLE_SHARE *ref_share= ref.sa.share;
+    List_iterator<FK_info> rk_it(ref_share->referenced_keys);
+    FK_info *rkp;
     for (const FK_info &fk: fkeys)
     {
       // Find keys referencing the acquired share and add them to referenced_keys
@@ -13708,11 +13710,25 @@ bool TABLE_SHARE::fk_handle_create(THD *thd, FK_create_vector &shares, FK_list *
         continue;
 
       // Check for duplicated id
-      for (const FK_info &rk: ref_share->referenced_keys)
+      rk_it.rewind();
+      while ((rkp= rk_it++))
       {
+        const FK_info &rk= *rkp;
         /* Constraint ids may be same in different databases */
         if (cmp_table(fk.foreign_db, rk.foreign_db))
           continue;
+#ifdef WITH_INNODB_FOREIGN_UPGRADE
+        if (!rk.foreign_id.length)
+        {
+          /*
+            Referenced table was upgraded before foreign table.
+            Now the hint is replaced with real foreign keys.
+          */
+          if (!cmp_table(fk.foreign_table, rk.foreign_table))
+            rk_it.remove();
+          continue;
+        }
+#endif /* WITH_INNODB_FOREIGN_UPGRADE */
         DBUG_ASSERT(rk.foreign_id.str);
         if (0 == rk.foreign_id.cmp(fk.foreign_id))
         {
