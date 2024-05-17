@@ -89,9 +89,11 @@ SET SESSION sort_buffer_size=16384;
 SET SESSION long_query_time=0;
 --let log_file=$log_slow_prefix-verbosity_4
 
+--disable_ps_protocol
 --source include/log_slow_start.inc
 SELECT c, count(*) from t1 group by c order by 2 limit 700,10;
 --source include/log_slow_stop.inc
+--enable_ps_protocol
 
 --let grep_pattern = ^# Max_tmp_disk_space_used.*
 
