@@ -24,6 +24,7 @@
 #include "my_json_writer.h"
 #include "opt_range.h"
 #include "sql_expression_cache.h"
+#include "item_subselect.h"
 
 const char * STR_DELETING_ALL_ROWS= "Deleting all rows";
 const char * STR_IMPOSSIBLE_WHERE= "Impossible WHERE";
@@ -2707,5 +2708,29 @@ void Explain_range_checked_fer::print_json(Json_writer *writer,
       writer->end_object();
     }
     writer->end_object();
+  }
+}
+
+
+void Explain_subq_materialization::print_explain_json(Json_writer *writer,
+                                                      bool is_analyze)
+{
+  writer->add_member("materialization").start_object();
+  if (is_analyze)
+  {
+    writer->add_member("r_strategy").add_str(tracker.get_exec_strategy());
+    if (tracker.has_partial_match_buffer_size())
+    {
+      writer->add_member("r_partial_match_buffer_size").add_size(
+            tracker.get_partial_match_buffer_size());
+    }
+
+    if (tracker.get_partial_match_merge_keys_count() > 0)
+    {
+      writer->add_member("r_partial_merge_key_sizes").start_array();
+      for(size_t i= 0; i < tracker.get_partial_match_merge_keys_count(); i++)
+        writer->add_ull(tracker.get_partial_match_merge_key_size(i));
+      writer->end_array();
+    }
   }
 }

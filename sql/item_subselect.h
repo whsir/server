@@ -18,6 +18,7 @@
 
 /* subselect Item */
 
+#include "item.h"
 #ifdef USE_PRAGMA_INTERFACE
 #pragma interface			/* gcc class implementation */
 #endif
@@ -43,6 +44,7 @@ typedef class st_select_lex SELECT_LEX;
 */
 typedef Comp_creator* (*chooser_compare_func_creator)(bool invert);
 class Cached_item;
+class Subq_materialization_tracker;
 class Explain_subq_materialization;
 
 /* base class for subselects */
@@ -592,7 +594,7 @@ public:
   
   List<Field_pair> corresponding_fields;
 
-  Explain_subq_materialization *materialization_tracker;
+  Subq_materialization_tracker *materialization_tracker;
 
   /*
     Used to determine how this subselect item is represented in the item tree,
@@ -1566,24 +1568,57 @@ public:
   Used to track various parameters of the materialized subquery execution,
   such as the execution strategy, sizes of buffers employed, etc
 */
-class Explain_subq_materialization : public Sql_alloc
+class Subq_materialization_tracker
 {
 public:
-  Explain_subq_materialization(MEM_ROOT *mem_root) :
-    partial_match_buffer_size(-1),
-    partial_match_merge_keys_counts(mem_root)
+  Subq_materialization_tracker(MEM_ROOT *mem_root)
+    : exec_strategy(subselect_hash_sj_engine::exec_strategy::UNDEFINED),
+      partial_match_buffer_size(-1),
+      partial_match_merge_key_sizes(mem_root)
   {}
 
   void track_partial_merge_keys(Ordered_key **merge_keys,
                                 uint merge_keys_count);
 
-  void print_explain_json(Json_writer *writer, bool is_analyze);
+  const char *get_exec_strategy() const
+  {
+    return exec_strategy_str[exec_strategy];
+  }
 
+  void set_exec_strategy(subselect_hash_sj_engine::exec_strategy es)
+  {
+    exec_strategy= es;
+  }
+
+  bool has_partial_match_buffer_size() const
+  {
+    return partial_match_buffer_size != -1;
+  }
+
+  longlong get_partial_match_buffer_size() const
+  {
+    return partial_match_buffer_size;
+  }
+
+  void set_partial_match_buffer_size(longlong sz)
+  {
+    partial_match_buffer_size= sz;
+  }
+
+  size_t get_partial_match_merge_keys_count() const
+  {
+    return partial_match_merge_key_sizes.elements();
+  }
+
+  ha_rows get_partial_match_merge_key_size(size_t idx) const
+  {
+    return partial_match_merge_key_sizes[idx];
+  }
+
+private:
   subselect_hash_sj_engine::exec_strategy exec_strategy;
-
   longlong partial_match_buffer_size;
-
-  Dynamic_array<ha_rows> partial_match_merge_keys_counts;
+  Dynamic_array<ha_rows> partial_match_merge_key_sizes;
 
   static const char* exec_strategy_str
     [subselect_hash_sj_engine::exec_strategy::END_OF_EXEC_STRATEGIES + 1];

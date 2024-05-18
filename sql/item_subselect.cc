@@ -3665,7 +3665,7 @@ void Item_in_subselect::init_subq_materialization_tracker(THD *thd)
       return;
     node->subq_materialization= new(qw->mem_root)
         Explain_subq_materialization(qw->mem_root);
-    materialization_tracker= node->subq_materialization;
+    materialization_tracker= node->subq_materialization->get_tracker();
   }
 }
 
@@ -5025,7 +5025,7 @@ subselect_hash_sj_engine::choose_partial_match_strategy(
       strategy= PARTIAL_MATCH_SCAN;
     else
       item->get_IN_subquery()->materialization_tracker->
-          partial_match_buffer_size= pm_buff_size;
+          set_partial_match_buffer_size(pm_buff_size);
   }
 }
 
@@ -5800,7 +5800,7 @@ int subselect_hash_sj_engine::exec()
       }
     }
   }
-  item_in->materialization_tracker->exec_strategy= strategy;
+  item_in->materialization_tracker->set_exec_strategy(strategy);
   if (pm_engine)
     lookup_engine= pm_engine;
   item_in->change_engine(lookup_engine);
@@ -6994,45 +6994,21 @@ void Item_subselect::init_expr_cache_tracker(THD *thd)
 }
 
 
-const char *Explain_subq_materialization::exec_strategy_str
+const char *Subq_materialization_tracker::exec_strategy_str
   [subselect_hash_sj_engine::exec_strategy::END_OF_EXEC_STRATEGIES + 1]=
 {
-  "undefined", "complete_match", "partial_match", "partial_match_merge",
+  "undefined", "index_lookup", "partial_match", "partial_match_merge",
   "partial_match_scan", "impossible"
 };
 
 
-void Explain_subq_materialization::track_partial_merge_keys(
+void Subq_materialization_tracker::track_partial_merge_keys(
     Ordered_key **merge_keys, uint merge_keys_count)
 {
-  partial_match_merge_keys_counts.resize(merge_keys_count, 0);
+  partial_match_merge_key_sizes.resize(merge_keys_count, 0);
   for (uint i= 0; i < merge_keys_count; i++)
   {
-    partial_match_merge_keys_counts[i]=
+    partial_match_merge_key_sizes[i]=
         merge_keys[i]->get_key_buff_elements();
-  }
-}
-
-
-void Explain_subq_materialization::print_explain_json(Json_writer *writer,
-                                                      bool is_analyze)
-{
-  writer->add_member("subquery_materialization").start_object();
-  if (is_analyze)
-  {
-    writer->add_member("r_exec_strategy").add_str(
-          exec_strategy_str[exec_strategy]);
-    if (partial_match_buffer_size != -1)
-    {
-      writer->add_member("r_partial_match_buffer_size").add_size(
-            partial_match_buffer_size);
-    }
-
-    for(uint i= 0; i < partial_match_merge_keys_counts.elements(); i++)
-    {
-      char name[50];
-      sprintf(name, "r_partial_merge_key_%u_size", i + 1);
-      writer->add_member(name).add_ull(partial_match_merge_keys_counts[i]);
-    }
   }
 }

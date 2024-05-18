@@ -1012,4 +1012,23 @@ public:
 };
 
 
+/*
+  EXPLAIN data structure for subquery materialization
+*/
+
+class Explain_subq_materialization : public Sql_alloc
+{
+public:
+  Explain_subq_materialization(MEM_ROOT *mem_root)
+    : tracker(mem_root)
+  {}
+
+  Subq_materialization_tracker *get_tracker() { return &tracker; }
+
+  void print_explain_json(Json_writer *writer, bool is_analyze);
+
+private:
+  Subq_materialization_tracker tracker;
+};
+
 #endif //SQL_EXPLAIN_INCLUDED

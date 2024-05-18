@@ -9,6 +9,7 @@ set @@optimizer_switch = "materialization=on,in_to_exists=off,semijoin=off";
 
 explain format=json select * from t1 where a in (select b from t2);
 --echo # "Complete match" execution strategy
+--source include/analyze-format.inc
 analyze format=json select * from t1 where a in (select b from t2);
 
 --echo # "Partial match" is used due to NOT IN

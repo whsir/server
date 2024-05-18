@@ -18,7 +18,7 @@ EXPLAIN
     },
     "subqueries": [
       {
-        "subquery_materialization": {
+        "materialization": {
           "query_block": {
             "select_id": 2,
             "table": {
@@ -40,35 +40,35 @@ ANALYZE
   "query_block": {
     "select_id": 1,
     "r_loops": 1,
-    "r_total_time_ms": 0.161304326,
+    "r_total_time_ms": "REPLACED",
     "table": {
       "table_name": "t1",
       "access_type": "ALL",
       "r_loops": 1,
       "rows": 4,
       "r_rows": 4,
-      "r_table_time_ms": 0.006418083,
-      "r_other_time_ms": 0.088071646,
+      "r_table_time_ms": "REPLACED",
+      "r_other_time_ms": "REPLACED",
       "filtered": 100,
       "r_filtered": 25,
       "attached_condition": "<in_optimizer>(t1.a,t1.a in (subquery#2))"
     },
     "subqueries": [
       {
-        "subquery_materialization": {
-          "r_exec_strategy": "complete_match",
+        "materialization": {
+          "r_strategy": "index_lookup",
           "query_block": {
             "select_id": 2,
             "r_loops": 1,
-            "r_total_time_ms": 0.048768458,
+            "r_total_time_ms": "REPLACED",
             "table": {
               "table_name": "t2",
               "access_type": "ALL",
               "r_loops": 1,
               "rows": 2,
               "r_rows": 2,
-              "r_table_time_ms": 0.002746655,
-              "r_other_time_ms": 0.03691762,
+              "r_table_time_ms": "REPLACED",
+              "r_other_time_ms": "REPLACED",
               "filtered": 100,
               "r_filtered": 100
             }
@@ -102,10 +102,10 @@ ANALYZE
     },
     "subqueries": [
       {
-        "subquery_materialization": {
-          "r_exec_strategy": "partial_match_merge",
+        "materialization": {
+          "r_strategy": "partial_match_merge",
           "r_partial_match_buffer_size": "32",
-          "r_partial_merge_key_1_size": 2,
+          "r_partial_merge_key_sizes": ["2"],
           "query_block": {
             "select_id": 2,
             "r_loops": 1,
@@ -150,8 +150,8 @@ ANALYZE
     },
     "subqueries": [
       {
-        "subquery_materialization": {
-          "r_exec_strategy": "partial_match_scan",
+        "materialization": {
+          "r_strategy": "partial_match_scan",
           "query_block": {
             "select_id": 2,
             "r_loops": 1,
@@ -203,8 +203,8 @@ ANALYZE
         },
         "subqueries": [
           {
-            "subquery_materialization": {
-              "r_exec_strategy": "partial_match_scan",
+            "materialization": {
+              "r_strategy": "partial_match_scan",
               "query_block": {
                 "select_id": 2,
                 "r_loops": 1,
@@ -258,10 +258,10 @@ ANALYZE
         },
         "subqueries": [
           {
-            "subquery_materialization": {
-              "r_exec_strategy": "partial_match_merge",
+            "materialization": {
+              "r_strategy": "partial_match_merge",
               "r_partial_match_buffer_size": "32",
-              "r_partial_merge_key_1_size": 2,
+              "r_partial_merge_key_sizes": ["2"],
               "query_block": {
                 "select_id": 2,
                 "r_loops": 1,
@@ -319,8 +319,8 @@ ANALYZE
     },
     "subqueries": [
       {
-        "subquery_materialization": {
-          "r_exec_strategy": "partial_match_scan",
+        "materialization": {
+          "r_strategy": "partial_match_scan",
           "query_block": {
             "select_id": 2,
             "r_loops": 1,
@@ -364,8 +364,8 @@ ANALYZE
     },
     "subqueries": [
       {
-        "subquery_materialization": {
-          "r_exec_strategy": "partial_match_scan",
+        "materialization": {
+          "r_strategy": "partial_match_scan",
           "query_block": {
             "select_id": 2,
             "r_loops": 1,
@@ -409,8 +409,8 @@ ANALYZE
     },
     "subqueries": [
       {
-        "subquery_materialization": {
-          "r_exec_strategy": "complete_match",
+        "materialization": {
+          "r_strategy": "index_lookup",
           "query_block": {
             "select_id": 2,
             "r_loops": 1,
@@ -429,8 +429,8 @@ ANALYZE
             },
             "subqueries": [
               {
-                "subquery_materialization": {
-                  "r_exec_strategy": "complete_match",
+                "materialization": {
+                  "r_strategy": "index_lookup",
                   "query_block": {
                     "select_id": 3,
                     "r_loops": 1,
@@ -499,8 +499,8 @@ ANALYZE
     },
     "subqueries": [
       {
-        "subquery_materialization": {
-          "r_exec_strategy": "partial_match_scan",
+        "materialization": {
+          "r_strategy": "partial_match_scan",
           "query_block": {
             "select_id": 2,
             "r_loops": 1,
@@ -545,8 +545,8 @@ ANALYZE
     },
     "subqueries": [
       {
-        "subquery_materialization": {
-          "r_exec_strategy": "partial_match_scan",
+        "materialization": {
+          "r_strategy": "partial_match_scan",
           "query_block": {
             "select_id": 2,
             "r_loops": 1,
@@ -603,7 +603,7 @@ EXPLAIN
     },
     "subqueries": [
       {
-        "subquery_materialization": {
+        "materialization": {
           "query_block": {
             "select_id": 2,
             "table": {
@@ -637,11 +637,10 @@ ANALYZE
     },
     "subqueries": [
       {
-        "subquery_materialization": {
-          "r_exec_strategy": "partial_match_merge",
+        "materialization": {
+          "r_strategy": "partial_match_merge",
           "r_partial_match_buffer_size": "92",
-          "r_partial_merge_key_1_size": 4,
-          "r_partial_merge_key_2_size": 3,
+          "r_partial_merge_key_sizes": ["4", "3"],
           "query_block": {
             "select_id": 2,
             "r_loops": 1,
@@ -683,8 +682,8 @@ ANALYZE
     },
     "subqueries": [
       {
-        "subquery_materialization": {
-          "r_exec_strategy": "partial_match_scan",
+        "materialization": {
+          "r_strategy": "partial_match_scan",
           "query_block": {
             "select_id": 2,
             "r_loops": 1,
@@ -720,7 +719,7 @@ EXPLAIN
     },
     "subqueries": [
       {
-        "subquery_materialization": {
+        "materialization": {
           "query_block": {
             "select_id": 2,
             "table": {
@@ -753,8 +752,8 @@ ANALYZE
     },
     "subqueries": [
       {
-        "subquery_materialization": {
-          "r_exec_strategy": "partial_match_scan",
+        "materialization": {
+          "r_strategy": "partial_match_scan",
           "query_block": {
             "select_id": 2,
             "r_loops": 1,
@@ -794,8 +793,8 @@ ANALYZE
     },
     "subqueries": [
       {
-        "subquery_materialization": {
-          "r_exec_strategy": "partial_match_scan",
+        "materialization": {
+          "r_strategy": "partial_match_scan",
           "query_block": {
             "select_id": 2,
             "r_loops": 1,
@@ -836,11 +835,10 @@ ANALYZE
     },
     "subqueries": [
       {
-        "subquery_materialization": {
-          "r_exec_strategy": "partial_match_merge",
+        "materialization": {
+          "r_strategy": "partial_match_merge",
           "r_partial_match_buffer_size": "92",
-          "r_partial_merge_key_1_size": 4,
-          "r_partial_merge_key_2_size": 3,
+          "r_partial_merge_key_sizes": ["4", "3"],
           "query_block": {
             "select_id": 2,
             "r_loops": 1,
@@ -880,11 +878,10 @@ ANALYZE
     },
     "subqueries": [
       {
-        "subquery_materialization": {
-          "r_exec_strategy": "partial_match_merge",
+        "materialization": {
+          "r_strategy": "partial_match_merge",
           "r_partial_match_buffer_size": "92",
-          "r_partial_merge_key_1_size": 4,
-          "r_partial_merge_key_2_size": 3,
+          "r_partial_merge_key_sizes": ["4", "3"],
           "query_block": {
             "select_id": 2,
             "r_loops": 1,
