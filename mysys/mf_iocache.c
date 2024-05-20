@@ -115,6 +115,7 @@ void end_tracking_io_cache(IO_CACHE *info)
   if ((info->myflags & (MY_TRACK | MY_TRACK_WITH_LIMIT)) &&
       info->tracking.file_size)
   {
+    info->myflags&= ~(MY_TRACK | MY_TRACK_WITH_LIMIT);
     info->tracking.file_size= 0;
     update_tmp_file_size(&info->tracking, 1);
   }
