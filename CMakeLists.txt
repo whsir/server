@@ -608,6 +608,8 @@ IF(NOT WITHOUT_SERVER)
    myisamlog
    myisampack
    perror
+   auth_ed25519v2
+   client_ed25519v2
    replace)
   IF(WIN32)
     ADD_DEPENDENCIES(minbuild echo mariadb-install-db my_safe_kill)

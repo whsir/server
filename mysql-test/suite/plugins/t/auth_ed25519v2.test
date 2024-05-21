@@ -1,0 +1,12 @@
+
+source include/not_embedded.inc;
+if (!$AUTH_ED25519V2_SO) {
+  skip No auth_ed25519v2 plugin;
+}
+install soname 'auth_ed25519v2';
+--error ER_CANNOT_USER
+create user test1@localhost identified via ed25519v2 using 'pwd';
+create user test1@localhost identified via ed25519v2 using PASSWORD('pwd');
+show grants for test1@localhost;
+connect con1, localhost, test1, pwd,,,,,client_ed25519v2;
+select 'yay!';

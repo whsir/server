@@ -87,7 +87,9 @@ static LEX_CSTRING native_password_plugin_name= {
 static LEX_CSTRING old_password_plugin_name= {
   STRING_WITH_LEN("mysql_old_password")
 };
-
+static LEX_CSTRING ed25519v2_plugin_name {
+        STRING_WITH_LEN("ed25519v2")
+};
 /// @todo make it configurable
 LEX_CSTRING *default_auth_plugin_name= &native_password_plugin_name;
 
@@ -3315,7 +3317,7 @@ static int check_role_is_granted_callback(ACL_USER_BASE *grantee, void *data)
   this function finds anonymous users too, it's when a
   user is not empty, but priv_user (acl_user->user) is empty.
 */
-static ACL_USER *find_user_or_anon(const char *host, const char *user, const char *ip)
+ACL_USER *find_user_or_anon(const char *host, const char *user, const char *ip)
 {
   return find_by_username_or_anon<ACL_USER>
     (reinterpret_cast<ACL_USER*>(acl_users.buffer), acl_users.elements,
@@ -14189,6 +14191,17 @@ static int server_mpvio_write_packet(MYSQL_PLUGIN_VIO *param,
   DBUG_RETURN(res);
 }
 
+void mpvio_init_auth_info(MYSQL_PLUGIN_VIO *vio, MYSQL_SERVER_AUTH_INFO *ai)
+{
+  MPVIO_EXT * const mpvio= (MPVIO_EXT *) vio;
+
+  ai->user_name= ai->thd->security_ctx->user;
+  ai->user_name_length= (uint) strlen(ai->user_name);
+  ai->auth_string= mpvio->acl_user->auth[mpvio->curr_auth].salt.str;
+  ai->auth_string_length= (ulong) mpvio->acl_user->auth[mpvio->curr_auth].salt.length;
+  strmake_buf(ai->authenticated_as, mpvio->acl_user->user.str);
+}
+
 /**
   vio->read_packet() callback method for server authentication plugins
 
@@ -14276,11 +14289,7 @@ done:
     goto err;
   }
 
-  ai->user_name= ai->thd->security_ctx->user;
-  ai->user_name_length= (uint) strlen(ai->user_name);
-  ai->auth_string= mpvio->acl_user->auth[mpvio->curr_auth].salt.str;
-  ai->auth_string_length= (ulong) mpvio->acl_user->auth[mpvio->curr_auth].salt.length;
-  strmake_buf(ai->authenticated_as, mpvio->acl_user->user.str);
+  mpvio_init_auth_info(param, ai);
 
   DBUG_RETURN((int)pkt_len);
 

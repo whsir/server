@@ -150,6 +150,9 @@ int fill_schema_table_privileges(THD *thd, TABLE_LIST *tables, COND *cond);
 int fill_schema_column_privileges(THD *thd, TABLE_LIST *tables, COND *cond);
 int wild_case_compare(CHARSET_INFO *cs, const char *str,const char *wildstr);
 
+class ACL_USER;
+ACL_USER *find_user_or_anon(const char *host, const char *user, const char *ip);
+
 /**
   Result of an access check for an internal schema or table.
   Internal ACL checks are always performed *before* using
