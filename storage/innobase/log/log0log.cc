@@ -189,7 +189,8 @@ static void *log_mmap(os_file_t file, os_offset_t size)
 {
   void *ptr=
     my_mmap(0, size_t(size),
-            srv_read_only_mode ? PROT_READ : PROT_READ | PROT_WRITE,
+            (srv_read_only_mode || srv_operation == SRV_OPERATION_BACKUP)
+            ? PROT_READ : PROT_READ | PROT_WRITE,
             MAP_SHARED_VALIDATE | MAP_SYNC, file, 0);
 #ifdef __linux__
   if (ptr == MAP_FAILED)
@@ -227,7 +228,7 @@ void log_t::attach_low(log_file_t file, os_offset_t size)
 #ifdef HAVE_PMEM
   ut_ad(!buf);
   ut_ad(!flush_buf);
-  if (size && !(size_t(size) & 4095) && srv_operation != SRV_OPERATION_BACKUP)
+  if (size && !(size_t(size) & 4095))
   {
     void *ptr= log_mmap(log.m_file, size);
     if (ptr != MAP_FAILED)

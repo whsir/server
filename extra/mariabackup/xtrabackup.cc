@@ -3360,6 +3360,79 @@ skip:
 	return(FALSE);
 }
 
+#ifdef HAVE_PMEM
+static bool xtrabackup_copy_mmap_logfile()
+{
+  mysql_mutex_assert_owner(&recv_sys.mutex);
+  recv_sys.offset= size_t(log_sys.calc_lsn_offset(recv_sys.lsn));
+  recv_sys.len= size_t(log_sys.file_size);
+  const size_t sequence_offset{log_sys.is_encrypted() ? 8U + 5U : 5U};
+
+  for (unsigned retry_count{0};;)
+  {
+    recv_sys_t::parse_mtr_result r;
+    size_t start_offset{recv_sys.offset};
+
+    {
+#ifdef HAVE_PMEM
+      if (recv_sys.parse_pmem<false>(false) == recv_sys_t::OK)
+#endif
+      {
+        do
+        {
+          /* Set the sequence bit (the backed-up log will not wrap around) */
+          byte *seq= &log_sys.buf[recv_sys.offset - sequence_offset];
+          ut_ad(*seq == log_sys.get_sequence_bit(recv_sys.lsn -
+                                                 sequence_offset));
+          if (!*seq)
+            *seq= 1; // FIXME
+        }
+        while ((r= recv_sys.parse_pmem<false>(false)) == recv_sys_t::OK);
+
+        if (ds_write(dst_log_file, log_sys.buf + start_offset,
+                     recv_sys.offset - start_offset))
+        {
+          msg("Error: write to ib_logfile0 failed");
+          return true;
+        }
+
+        pthread_cond_broadcast(&scanned_lsn_cond);
+
+        if (r == recv_sys_t::GOT_EOF)
+          break;
+
+        if (recv_sys.offset < log_sys.get_block_size())
+          break;
+
+        if (xtrabackup_throttle && io_ticket-- < 0)
+          mysql_cond_wait(&wait_throttle, &recv_sys.mutex);
+
+        retry_count= 0;
+        continue;
+      }
+      else
+      {
+        if (retry_count == 100)
+          break;
+        mysql_mutex_unlock(&recv_sys.mutex);
+        if (!retry_count++)
+          msg("Retrying read of log at LSN=" LSN_PF, recv_sys.lsn);
+        // FIXME: minimize the invalidation to the needed region
+        // FIXME: have a target LSN in a global variable
+        msync(log_sys.buf, size_t(log_sys.file_size), MS_INVALIDATE);
+        // FIXME: do not sleep?
+        my_sleep(1000);
+      }
+    }
+    mysql_mutex_lock(&recv_sys.mutex);
+  }
+
+  if (verbose)
+    msg(">> log scanned up to (" LSN_PF ")", recv_sys.lsn);
+  return false;
+}
+#endif
+
 /** Copy redo log until the current end of the log is reached
 @return	whether the operation failed */
 static bool xtrabackup_copy_logfile()
@@ -3369,10 +3442,12 @@ static bool xtrabackup_copy_logfile()
 
   ut_a(dst_log_file);
   ut_ad(recv_sys.is_initialised());
+#ifdef HAVE_PMEM
+  if (log_sys.is_pmem())
+    return xtrabackup_copy_mmap_logfile();
+#endif
   const size_t sequence_offset{log_sys.is_encrypted() ? 8U + 5U : 5U};
   const size_t block_size_1{log_sys.get_block_size() - 1};
-
-  ut_ad(!log_sys.is_pmem());
 
   {
     recv_sys.offset= size_t(recv_sys.lsn - log_sys.get_first_lsn()) &
