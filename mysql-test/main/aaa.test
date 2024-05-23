@@ -1,0 +1,59 @@
+create table t1
+
+(
+
+	PARENT_ID int(10) unsigned NOT NULL AUTO_INCREMENT,
+
+	PARENT_FIELD VARCHAR(10),
+
+	PRIMARY KEY (PARENT_ID)
+
+);
+
+ 
+
+create table t2
+
+(
+
+	CHILD_ID INT NOT NULL AUTO_INCREMENT,
+
+	PARENT_ID INT NOT NULL,
+
+	CHILD_FIELD varchar(10),
+
+	PRIMARY KEY (CHILD_ID)
+
+);
+
+ 
+
+INSERT INTO t1 (PARENT_FIELD)
+
+SELECT 'AAAA';
+
+ 
+
+INSERT INTO t2 (PARENT_ID, CHILD_FIELD)
+
+SELECT 1, 'BBBB';
+
+ 
+
+select
+
+ t1.PARENT_ID,
+
+ min(CHILD_FIELD)
+
+ from t1 straight_join t2
+
+ where t1.PARENT_ID = 1
+
+ and t1.PARENT_ID = t2.PARENT_ID
+
+ and t2.CHILD_FIELD = "ZZZZ";
+
+ 
+
+DROP TABLES t1, t2;
